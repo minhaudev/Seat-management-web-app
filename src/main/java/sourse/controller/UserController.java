@@ -42,5 +42,4 @@ import sourse.service.UserService;
             apiResponse.setData(userService.show(id));
             return apiResponse;
         }
-
     }

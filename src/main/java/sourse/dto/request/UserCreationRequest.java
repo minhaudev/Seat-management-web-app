@@ -25,9 +25,9 @@ public class UserCreationRequest {
     String password;
     @NotBlank
     String confirmPassword;
-    String roleId;
-    String projectId;
-    String teamId;
+    String role;
+    String project;
+    String team;
 
 
 }

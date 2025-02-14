@@ -12,7 +12,8 @@ public class UserResponse {
     String lastName;
     String email;
     String phone;
-    String roleId;
-    String projectId;
-    String teamId;
+    String role;
+    String project;
+    String team;
+    String created;
 }
