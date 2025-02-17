@@ -1,17 +1,22 @@
 package sourse.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import sourse.core.ApiResponse;
 import sourse.dto.request.UserCreationRequest;
 import sourse.dto.request.UserUpdateRequest;
 import sourse.dto.response.UserResponse;
-import sourse.entity.User;
 import sourse.service.UserService;
 
-    @RestController
+import java.util.List;
+
+@Slf4j
+@RestController
     @RequestMapping("api/users")
     @Validated
     public class UserController  {
@@ -40,6 +45,19 @@ import sourse.service.UserService;
         ApiResponse<UserResponse> show(@PathVariable String id) {
             ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
             apiResponse.setData(userService.show(id));
+            return apiResponse;
+        }
+    
+        @GetMapping("")
+        ApiResponse<List<UserResponse>> list() {
+            ApiResponse<List<UserResponse>> apiResponse = new ApiResponse<>();
+            apiResponse.setData(userService.index());
+            return apiResponse;
+        }
+        @GetMapping("/info")
+    ApiResponse<UserResponse> showInfo() {
+            ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
+            apiResponse.setData(userService.showInfo());
             return apiResponse;
         }
     }

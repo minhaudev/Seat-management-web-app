@@ -24,6 +24,7 @@ import sourse.repository.UserRepository;
 
 import java.text.ParseException;
 import java.util.Date;
+import java.util.StringJoiner;
 
 @Service
 @RequiredArgsConstructor
@@ -68,7 +69,7 @@ public class AuthenticationService {
       JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder().subject(user.getEmail()).
               issuer("minhaudev.com").issueTime(new Date())
               .expirationTime(new Date(System.currentTimeMillis() + 3600 * 1000))
-              .claim("userId", "user")
+              .claim("scope", buildScope(user))
               .build();
           // Tạo JWT
           SignedJWT signedJWT = new SignedJWT(
@@ -78,11 +79,14 @@ public class AuthenticationService {
           try {
               signedJWT.sign(new MACSigner(SECRET.getBytes()));
               return signedJWT.serialize();
-          } catch (KeyLengthException e) {
-              throw new RuntimeException(e);
           } catch (JOSEException e) {
               throw new RuntimeException(e);
           }
       }
+      private String  buildScope (User user){
+        StringJoiner stringJoiner = new StringJoiner(" ");
+        user.getRoles().forEach(stringJoiner::add);
+        return stringJoiner.toString();
+      };
 
 }

@@ -27,13 +27,13 @@ public class ApplicationInitConfig {
     @Bean
     ApplicationRunner applicationRunner() {
         return args -> {
-           if( userRepository.findByEmail("admin3@admin.com").isEmpty()){
+           if( userRepository.findByEmail("superuser@superuser.com").isEmpty()){
                var roles = new HashSet<String>();
                roles.add(EnumType.UserRole.SUPERUSER.name());
-               User user = User.builder().email("admin3@admin.com").password(passwordEncoder.encode("admin1233")).roles(roles).build();
+               User user = User.builder().email("superuser@superuser.com").password(passwordEncoder.encode("superuser123")).roles(roles).build();
                userRepository.save(user);
                System.out.println("created admin");
-                log.warn("default create 1 user with email" + "admin@admin.com" + "and password" +"admin");
+                log.warn("default create 1 user with email" + "superuser@superuser.com" + "and password" +"superuser123");
             }else {
                log.warn("user already exist");
 

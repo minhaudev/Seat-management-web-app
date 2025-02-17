@@ -2,6 +2,10 @@
    import lombok.AccessLevel;
    import lombok.RequiredArgsConstructor;
    import lombok.experimental.FieldDefaults;
+   import lombok.extern.slf4j.Slf4j;
+   import org.springframework.security.access.prepost.PostAuthorize;
+   import org.springframework.security.access.prepost.PreAuthorize;
+   import org.springframework.security.core.context.SecurityContextHolder;
    import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
    import org.springframework.security.crypto.factory.PasswordEncoderFactories;
    import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,7 +21,9 @@
    import sourse.dto.request.UserCreationRequest;
 
    import java.util.HashSet;
+   import java.util.List;
 
+   @Slf4j
    @Service
    @RequiredArgsConstructor
    @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -56,7 +62,19 @@ if(!request.isPasswordConfirmed()) {
          userRepository.delete(user);
           
       }
+       @PostAuthorize("returnObject.email == authentication.name or hasRole('SUPERUSER')" )
    public UserResponse show(String id) {
          User user = this.findById(id);
-   return userMapper.toUserResponse(userRepository.findById(id).orElseThrow(()-> new RuntimeException("User not found")));}
+   return userMapper.toUserResponse(userRepository.findById(id).orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND)));
+      }
+       @PreAuthorize("hasRole('SUPERUSER')")
+       public List<UserResponse> index() {
+              return userMapper.toUserResponseList(userRepository.findAll());
+       }
+       public UserResponse showInfo() {
+                 var authentication = SecurityContextHolder.getContext().getAuthentication();
+                 var email = authentication.getName();
+                 return userMapper.toUserResponse(userRepository.findByEmail(email).orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND)));
+       }
    }
+  
