@@ -38,42 +38,21 @@ public class RoomService {
         room.setUser(user);
         room.setHall(hall);
         roomRepository.save(room);
-        return RoomResponse.builder()
-                .id(room.getId())
-                .name(room.getName())
-                .description(room.getDescription())
-                .owner(room.getUser() != null ? room.getUser().getId() : null)
-                .hallId(room.getHall() != null ? room.getHall().getId() : null)
-                .created(room.getCreated().toString())
-                .build();
+       return  roomMapper.toRoomResponse(room);
     }
     public RoomResponse update (String id, RoomUpdateRequest request) {
         Room room = this.findById(id);
         roomMapper.updateRoom(room, request);
         roomRepository.save(room);
-        return RoomResponse.builder()
-                .id(room.getId())
-                .name(room.getName())
-                .description(room.getDescription())
-                .owner(room.getUser() != null ? room.getUser().getId() : null)
-                .hallId(room.getHall() != null ? room.getHall().getId() : null)
-                .created(room.getCreated().toString())
-                .build();
+        return  roomMapper.toRoomResponse(room);
     }
     public RoomResponse show (String  id) {
         Room room = this.findById(id);
-        return RoomResponse.builder()
-                .id(room.getId())
-                .name(room.getName())
-                .description(room.getDescription())
-                .owner(room.getUser() != null ? room.getUser().getId() : null)
-                .hallId(room.getHall() != null ? room.getHall().getId() : null)
-                .created(room.getCreated().toString())
-                .build();
+        return  roomMapper.toRoomResponse(room);
     }
     public void delete (String id) {
         Room room = this.findById(id);
         roomRepository.delete(room);
     }
-    
+
 }

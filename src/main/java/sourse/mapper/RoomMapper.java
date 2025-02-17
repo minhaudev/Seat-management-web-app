@@ -13,6 +13,9 @@ import sourse.entity.User;
 @Mapper(componentModel = "spring")
 public interface RoomMapper {
     Room toRoom(RoomCreationRequest room);
+
+    @Mapping(target = "owner", source = "user.id")
+    @Mapping(target = "hallId", source = "hall.id")
     RoomResponse toRoomResponse(Room room);
     @Mapping(target = "id", ignore = true)
     void updateRoom(@MappingTarget Room room, RoomUpdateRequest request);

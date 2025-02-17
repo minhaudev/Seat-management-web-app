@@ -36,13 +36,7 @@ public class HallService {
         Hall hall = hallMapper.toHall(request);
         hall.setFloor(floor);
         hall = hallRepository.save(hall);
-        return HallResponse.builder()
-                .id(hall.getId())
-                .name(hall.getName())
-                .description(hall.getDescription())
-                .floorId(hall.getFloor() != null ? hall.getFloor().getId() : null) 
-                .created(hall.getCreated().toString())
-                .build();
+        return  hallMapper.toHallResponse(hall);
     }
     public HallResponse show(String id) {
         Hall hall = this.findById(id);

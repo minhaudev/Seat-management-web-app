@@ -18,6 +18,8 @@ public enum ErrorCode {
     FLOOR_NOT_FOUND(1009, "Floor not found!"),
     HALL_NOT_FOUND(1010, "Hall not found!"),
     NAME_EXITED(1011, "Name exited!"),
+    MATCH_PASSWORD(1012, "Password is not match!"),
+    LOGIN_FAILED(1012, "Email or password is incorrect!"),
     UNCATEGORIZED(9999, "Uncategorized!");
     
     private int code;

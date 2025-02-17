@@ -29,5 +29,7 @@ public class UserCreationRequest {
     String project;
     String team;
 
-
+    public boolean isPasswordConfirmed() {
+        return password != null && password.equals(confirmPassword);
+    }
 }

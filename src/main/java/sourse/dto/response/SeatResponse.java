@@ -7,13 +7,13 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PUBLIC)
 public class SeatResponse {
     String id;
     String name;
     String userId;
     String roomId;
-    String seatType;
+    String typeSeat;
     String status;
     String number;
     String description;

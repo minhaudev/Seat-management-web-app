@@ -13,6 +13,7 @@ public class SeatUpdateRequest {
     @NotBlank
     String name;
     String description;
+    String number;
     String  seatType;
     String  status;
 }

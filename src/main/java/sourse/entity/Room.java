@@ -7,6 +7,7 @@ import sourse.core.BaseEntity;
 
 @Entity
 @Data
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

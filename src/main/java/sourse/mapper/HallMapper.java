@@ -12,6 +12,7 @@ import sourse.entity.Hall;
 public interface HallMapper {
     @Mapping(target = "floor", ignore = true)
     Hall toHall(HallCreationRequest hall);
+    @Mapping(target = "floorId",source = "floor.id")
     HallResponse toHallResponse(Hall hall);
     @Mapping(target = "id", ignore = true)
     void updateHall(@MappingTarget Hall hall, HallUpdateRequest request);

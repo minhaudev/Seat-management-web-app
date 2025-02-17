@@ -1,19 +1,23 @@
 package sourse.mapper;
 
 import org.mapstruct.*;
+
 import sourse.dto.request.SeatCreationRequest;
 import sourse.dto.request.SeatUpdateRequest;
 import sourse.dto.response.SeatResponse;
 import sourse.entity.Seat;
 import sourse.enums.EnumType;
 
-@Mapper(componentModel = "spring", uses = SeatMapperHelper.class) // 🔹 Sử dụng Helper
+@Mapper(componentModel = "spring")
 public interface SeatMapper {
 
-    @Mapping(source = "status", target = "status", qualifiedByName = "mapStatus")
-    @Mapping(source = "typeSeat", target = "typeSeat", qualifiedByName = "mapTypeSeat")
+    @Mapping(target = "status", source = "status")
+    @Mapping(target = "typeSeat", source = "typeSeat")
     Seat toSeat(SeatCreationRequest seat);
 
+
+    @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "roomId", source = "room.id")
     SeatResponse toSeatResponse(Seat seat);
 
     @Mapping(target = "id", ignore = true)
