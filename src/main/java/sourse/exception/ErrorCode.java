@@ -1,27 +1,35 @@
 package sourse.exception;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public enum ErrorCode {
-    EMAIL_EXITED(1001, "Email exited!" ),
-    PASSWORD(1002, "Password least 8 chars!"),
-    FORMAT_EMAIL(1003, "email is not in correct format"),
-    PHONE_NUMBER(1004, "Phone number must not exceed 15 characters."),
-    INVALID_KEY(1005, "Invalid key!"),
-    USER_NOT_FOUND(1006, "User not found!"),
-    ROOM_NOT_FOUND(1007, "Room not found!"),
-    SEAT_NOT_FOUND(1008, "Seat not found!"),
-    FLOOR_NOT_FOUND(1009, "Floor not found!"),
-    HALL_NOT_FOUND(1010, "Hall not found!"),
-    NAME_EXITED(1011, "Name exited!"),
-    MATCH_PASSWORD(1012, "Password is not match!"),
-    LOGIN_FAILED(1012, "Email or password is incorrect!"),
-    UNCATEGORIZED(9999, "Uncategorized!");
-    
-    private int code;
-    private String message;
+    EMAIL_EXITED(1001, "Email exited!", HttpStatus.BAD_REQUEST),
+    PASSWORD(1002, "Password least 8 chars!",  HttpStatus.BAD_REQUEST),
+    FORMAT_EMAIL(1003, "email is not in correct format",  HttpStatus.BAD_REQUEST),
+    PHONE_NUMBER(1004, "Phone number must not exceed 15 characters.", HttpStatus.BAD_REQUEST),
+    INVALID_KEY(1005, "Invalid key!",  HttpStatus.BAD_REQUEST),
+    USER_NOT_FOUND(1006, "User not found!", HttpStatus.NOT_FOUND),
+    ROOM_NOT_FOUND(1007, "Room not found!",HttpStatus.NOT_FOUND),
+    SEAT_NOT_FOUND(1008, "Seat not found!",HttpStatus.NOT_FOUND),
+    FLOOR_NOT_FOUND(1009, "Floor not found!",HttpStatus.NOT_FOUND),
+    HALL_NOT_FOUND(1010, "Hall not found!",HttpStatus.NOT_FOUND),
+    NAME_EXITED(1011, "Name exited!", HttpStatus.BAD_REQUEST),
+    MATCH_PASSWORD(1012, "Password is not match!", HttpStatus.BAD_REQUEST),
+    LOGIN_FAILED(1015, "Email or password is incorrect!", HttpStatus.BAD_REQUEST),
+    UNCATEGORIZED(1013, "You don't have permission to access!", HttpStatus.FORBIDDEN),
+    UNAUTHENTICATED(1014, "User is not authenticated!",HttpStatus.UNAUTHORIZED),
+    UNCATEGORIZED_EXCEPTION(9999, "Uncategorized-sever!",HttpStatus.INTERNAL_SERVER_ERROR);
+    int code;
+    String message;
+    HttpStatusCode statusCode;
 }

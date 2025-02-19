@@ -1,5 +1,6 @@
 package sourse.core;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,6 +18,7 @@ public class ApiResponse <T> {
     private int code = 1000;
     private String message;
     private T data;
+    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss", timezone = "UTC")
     @Builder.Default
     LocalDateTime timestamp = LocalDateTime.now();
 }
