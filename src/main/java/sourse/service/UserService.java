@@ -41,7 +41,7 @@ if(!request.isPasswordConfirmed()) {
           user.setPassword(passwordEncoder.encode(request.getPassword()));
           HashSet<String> roles = new HashSet<>();
           roles.add(EnumType.UserRole.USER.name());
-          user.setRoles(roles);
+//          user.setRoles(roles);
          userRepository.save(user);
            return userMapper.toUserResponse(user);
       }

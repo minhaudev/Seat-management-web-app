@@ -30,7 +30,9 @@ public class ApplicationInitConfig {
            if( userRepository.findByEmail("superuser@superuser.com").isEmpty()){
                var roles = new HashSet<String>();
                roles.add(EnumType.UserRole.SUPERUSER.name());
-               User user = User.builder().email("superuser@superuser.com").password(passwordEncoder.encode("superuser123")).roles(roles).build();
+               User user = User.builder().email("superuser@superuser.com").password(passwordEncoder.encode("superuser123")).
+//                       roles(roles)z
+                       build();
                userRepository.save(user);
                System.out.println("created admin");
                 log.warn("default create 1 user with email" + "superuser@superuser.com" + "and password" +"superuser123");

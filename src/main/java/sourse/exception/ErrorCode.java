@@ -28,6 +28,7 @@ public enum ErrorCode {
     LOGIN_FAILED(1015, "Email or password is incorrect!", HttpStatus.BAD_REQUEST),
     UNCATEGORIZED(1013, "You don't have permission to access!", HttpStatus.FORBIDDEN),
     UNAUTHENTICATED(1014, "User is not authenticated!",HttpStatus.UNAUTHORIZED),
+    PERMISSION_NOT_FOUND(1016, "Permission not found!", HttpStatus.BAD_REQUEST),
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized-sever!",HttpStatus.INTERNAL_SERVER_ERROR);
     int code;
     String message;

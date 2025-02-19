@@ -1,6 +1,7 @@
 package sourse.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import sourse.entity.Role;
 
 import java.util.Set;
 
@@ -15,7 +16,7 @@ public class UserResponse {
     String lastName;
     String email;
     String phone;
-    Set<String> roles;
+    Set<Role> roles;
     String project;
     String team;
     String created;

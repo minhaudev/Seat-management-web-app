@@ -1,11 +1,8 @@
 package sourse.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import sourse.core.BaseEntity;
-import jakarta.persistence.Entity;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -26,8 +23,8 @@ String lastName;
 String email;
 String password;
 String phone;
-Set<String>roles;
 String project;
 String team;
-
+@ManyToMany
+Set<Role>roles;
 }
