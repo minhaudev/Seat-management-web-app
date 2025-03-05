@@ -1,0 +1,24 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: root
+
+redis:
+  host: 127.0.0.1  # Hoặc sử dụng IP của container Redis
+  port: 6379
+  password: root
+  ssl: false
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate.format_sql: true
+
+jwt:
+  signerKey: "KUJOzbCuK/OeoCghRlx37paZxItqk17Fg62DMJNdH5gIeEsz1sN2b15SvP8aY7fV"
