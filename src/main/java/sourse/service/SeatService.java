@@ -125,13 +125,16 @@ public class SeatService {
     public SeatResponse assignment(String id, String userId ) {
         Seat seat = this.findById(id);
        var user = userService.findById(userId);
+       if(seat.getUser() != null) {
+           throw new AppException(ErrorCode.SEAT_TAKEN);
+       }
         Room room = seat.getRoom();
         validateLandlordPermission(room);
         seat.setUser(user);
         seat.setStatus(EnumType.SeatStatus.OCCUPIED);
         seatRepository.save(seat);
         SeatResponse response = seatMapper.toSeatResponse(seat);
-//        webSocketService.sendSeatUpdateNotification(user, response);
+        webSocketService.sendSeatUpdateNotification(room.getId(), seatMapper.toSeatResponse(seat));
         return  response;
 
     }
@@ -139,6 +142,7 @@ public class SeatService {
     public  SeatResponse reAssignment(String id, String idNewSeat){
         Seat oldSeat = this.findById(id);
         Seat newSeat = this.findById(idNewSeat);
+        var roomId = newSeat.getRoom().getId();
         if (oldSeat.getUser() == null) {
             throw new AppException(ErrorCode.NO_USER_IN_SEAT);
         } else if(newSeat.getUser() != null){
@@ -154,6 +158,7 @@ public class SeatService {
         oldSeat.setStatus(EnumType.SeatStatus.AVAILABLE);
         seatRepository.save(oldSeat);
         seatRepository.save(newSeat);
+        webSocketService.sendSeatUpdateNotification(roomId, seatMapper.toSeatResponse(newSeat));
         return seatMapper.toSeatResponse(newSeat);
     }
 
