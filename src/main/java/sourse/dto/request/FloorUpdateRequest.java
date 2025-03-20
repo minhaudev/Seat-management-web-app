@@ -1,6 +1,5 @@
 package sourse.dto.request;
 
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -10,14 +9,8 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class SeatCreationRequest {
+public class FloorUpdateRequest {
     @NotBlank
     String name;
-    String number;
     String description;
-    @NotBlank
-    String typeSeat;
-    String status;
-    String userId;
-    String roomId;
 }

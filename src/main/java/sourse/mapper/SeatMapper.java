@@ -19,7 +19,7 @@ public interface SeatMapper {
 
 
 
-    @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "user", source = "user")
     @Mapping(target = "roomId", source = "room.id")
     SeatResponse toSeatResponse(Seat seat);
     List<SeatResponse> toSeatResponseList(List<Seat> seats);

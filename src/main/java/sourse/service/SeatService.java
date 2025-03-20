@@ -1,4 +1,5 @@
 package sourse.service;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
@@ -8,7 +9,9 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import sourse.dto.request.SeatCreationRequest;
+import sourse.dto.request.SeatUpdatePositionRequest;
 import sourse.dto.request.SeatUpdateRequest;
 import sourse.dto.response.SeatResponse;
 import sourse.dto.response.SeatUserResponse;
@@ -23,6 +26,7 @@ import sourse.mapper.UserMapper;
 import sourse.repository.SeatRepository;
 import sourse.repository.UserRepository;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,18 +52,31 @@ public class SeatService {
     private void validateLandlordPermission(Room room) {
         authenticationService.checkLandlordPermission(room.getUser().getId());
     }
+    private final ApplicationContext applicationContext;
 
+    private UserService getUserService() {
+        return applicationContext.getBean(UserService.class);
+    }
     @PreAuthorize("hasAnyRole('SUPERUSER', 'LANDLORD')")
     public SeatResponse store(SeatCreationRequest request) {
         if (seatRepository.existsByName(request.getName()))
             throw new AppException(ErrorCode.NAME_EXITED);
-
-        Room room = roomService.findById(request.getRoomId());
+       Room room = roomService.findById(request.getRoomId());
         validateLandlordPermission(room);
-
         Seat seat = seatMapper.toSeat(request);
         seat.setRoom(room);
-        seat.setStatus(EnumType.SeatStatus.AVAILABLE);
+        if (request.getUserId() != null) {
+            User user = getUserService().findById(request.getUserId());
+            if (seatRepository.existsByUser(user)) {
+                throw new AppException(ErrorCode.SEAT_ALREADY_ASSIGNED);
+            }
+            seat.setUser(user);
+            seat.setStatus(EnumType.SeatStatus.OCCUPIED);
+        } else {
+            seat.setStatus(EnumType.SeatStatus.AVAILABLE);
+        }
+        int maxNumber = seatRepository.findMaxNumber();
+        seat.setNumber(String.valueOf(maxNumber + 1));
         seatRepository.save(seat);
         return seatMapper.toSeatResponse(seat);
     }
@@ -109,10 +126,9 @@ public class SeatService {
 
     @PreAuthorize("hasAnyRole('SUPERUSER', 'LANDLORD')")
     public Page <SeatResponse> listSeatInRoom (String id,int page, int size, EnumType.SeatStatus status) {
-        log.info("status"+ status);
         Page<Seat> seats;
        Room room = roomService.findById(id);
-        validateLandlordPermission(room);
+        validateLandlordPermission(room);   
         Pageable pageable = PageRequest.of(page, size);
         if (status != null) {
             seats = seatRepository.findByRoomIdAndStatus(room.getId(), status, pageable); // Lọc theo status
@@ -183,5 +199,21 @@ public class SeatService {
                 .number(seat.getNumber())
                 .created(seat.getCreated().toString())
                 .build();
+    }
+    @PreAuthorize("hasAnyRole('SUPERUSER', 'LANDLORD')")
+    @Transactional
+
+    public void updatePositionSeats(List<SeatUpdatePositionRequest> seats){
+        List<Seat> seatList = new ArrayList<>();
+        for (SeatUpdatePositionRequest seatRequest : seats) {
+            Seat seat = this.findById(seatRequest.getId());
+            if (seat != null) {
+                seat.setOx(seatRequest.getOx());
+                seat.setOy(seatRequest.getOy());
+                seatList.add(seat);
+            }
+        }
+        seatRepository.saveAll(seatList);
+
     }
 }

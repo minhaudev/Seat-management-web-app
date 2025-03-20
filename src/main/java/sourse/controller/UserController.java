@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import sourse.core.ApiResponse;
 import sourse.dto.request.UserCreationRequest;
 import sourse.dto.request.UserUpdateRequest;
+import sourse.dto.response.RoomResponse;
+import sourse.dto.response.UserInRoomResponse;
 import sourse.dto.response.UserResponse;
 import sourse.service.UserService;
 
@@ -47,7 +49,7 @@ import java.util.List;
             apiResponse.setData(userService.show(id));
             return apiResponse;
         }
-    
+
         @GetMapping("")
         ApiResponse<List<UserResponse>> index() {
             ApiResponse<List<UserResponse>> apiResponse = new ApiResponse<>();
@@ -58,6 +60,12 @@ import java.util.List;
     ApiResponse<UserResponse> showInfo() {
             ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
             apiResponse.setData(userService.showInfo());
+            return apiResponse;
+        }
+        @GetMapping("/room/{id}")
+    ApiResponse<List<UserInRoomResponse>> userInRoom(@PathVariable String id) {
+            ApiResponse<List<UserInRoomResponse>> apiResponse = new ApiResponse<>();
+            apiResponse.setData(userService.userInRoom(id));
             return apiResponse;
         }
     }

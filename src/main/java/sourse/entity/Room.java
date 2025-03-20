@@ -1,5 +1,6 @@
 package sourse.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -16,9 +17,10 @@ import sourse.core.BaseEntity;
 public class Room extends BaseEntity {
     @Column(unique = true, nullable = false)
     String name;
-    String description;
-    
+        String description;
+    String nameOwner;
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "owner_id", referencedColumnName = "id")
     User user;
 

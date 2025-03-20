@@ -1,6 +1,5 @@
 package sourse.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -9,9 +8,8 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RoomUpdateRequest {
-    @NotBlank
-    String name;
-    String owner;
-    String description;
+public class SeatUpdatePositionRequest {
+   String id;
+   int ox;
+   int oy;
 }

@@ -12,6 +12,7 @@ public class RoomResponse {
     String name;
     String description;
     String owner;
+    String nameOwner;
     String hallId;
     String created;
 }

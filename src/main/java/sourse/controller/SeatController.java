@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import sourse.core.ApiResponse;
 
 import sourse.dto.request.SeatCreationRequest;
+import sourse.dto.request.SeatUpdatePositionRequest;
 import sourse.dto.request.SeatUpdateRequest;
 
 import sourse.dto.response.SeatResponse;
@@ -78,7 +79,6 @@ public class SeatController {
      ApiResponse<SeatResponse> assignment (@PathVariable String id, @RequestParam String idUser) {
           ApiResponse<SeatResponse> apiResponse = new ApiResponse<>();
           apiResponse.setData(seatService.assignment(id, idUser));
-
           return  apiResponse;
     }
     @PostMapping("/{id}/reassign")
@@ -92,5 +92,10 @@ public class SeatController {
         ApiResponse<SeatUserResponse> apiResponse = new ApiResponse<>();
         apiResponse.setData(seatService.seatUser(id));
         return  apiResponse;
+    }
+    @PutMapping("/update-positions")
+    ApiResponse<Void>  updatePositions (@RequestBody List <SeatUpdatePositionRequest> seats ){
+        seatService.updatePositionSeats(seats);
+        return ApiResponse.<Void>builder().message("Update seats successful").build();
     }
 }

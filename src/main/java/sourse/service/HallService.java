@@ -6,6 +6,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import sourse.dto.request.HallCreationRequest;
+import sourse.dto.request.HallUpdateRequest;
 import sourse.dto.response.HallResponse;
 import sourse.entity.Floor;
 import sourse.entity.Hall;
@@ -14,6 +15,8 @@ import sourse.exception.ErrorCode;
 import sourse.mapper.HallMapper;
 import sourse.repository.HallRepository;
 import sourse.repository.UserRepository;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -44,5 +47,28 @@ public class HallService {
     public HallResponse show(String id) {
         Hall hall = this.findById(id);
         return hallMapper.toHallResponse(hall);
+    }
+    @PreAuthorize("hasAnyRole('SUPERUSER')")
+    public HallResponse update(String id, HallUpdateRequest request) {
+        Hall hall = this.findById(id);
+        hallMapper.updateHall(hall, request);
+        hallRepository.save(hall);
+        return hallMapper.toHallResponse(hall);
+    }
+    @PreAuthorize("hasAnyRole('SUPERUSER')")
+    public void delete(String id) {
+        Hall hall = this.findById(id);
+        hallRepository.delete(hall);
+        hallMapper.toHallResponse(hall);
+    }
+    @PreAuthorize("hasAnyRole('SUPERUSER')")
+    public   List<HallResponse> index (){
+        return hallMapper.toHallResponseList( hallRepository.findAll());
+    }
+    @PreAuthorize("hasAnyRole('SUPERUSER')")
+    public List <HallResponse> getAllFloor(String id) {
+        Floor floor = floorService.findById(id);
+        List<Hall>  halls =  hallRepository.findByFloorId(floor.getId());
+        return hallMapper.toHallResponseList(halls);
     }
 }

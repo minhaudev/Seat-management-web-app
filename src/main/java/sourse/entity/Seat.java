@@ -15,7 +15,10 @@ import sourse.core.BaseEntity;
 public class Seat extends BaseEntity {
     @Column(unique = true, nullable = false)
     String name;
+
+    @Column(unique = true, nullable = false)
     String number;
+
     String description;
 
     @Enumerated(EnumType.STRING)
@@ -32,4 +35,10 @@ public class Seat extends BaseEntity {
     @ManyToOne
     @JoinColumn(name="user_id", referencedColumnName = "id")
     User user;
+
+    @Column(nullable = false)
+    int ox = 0;
+
+    @Column(nullable = false)
+    int oy = 0;
 }

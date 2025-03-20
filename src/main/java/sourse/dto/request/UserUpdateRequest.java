@@ -16,6 +16,7 @@ public class UserUpdateRequest {
     String firstName;
     @Size(min =3, message = "LastName must be at least 3 characters.")
     String lastName;
+    String  roomId;
     @Size(min=2, max = 15, message =  "PHONE_NUMBER")
     String phone;
     List<String> roles;

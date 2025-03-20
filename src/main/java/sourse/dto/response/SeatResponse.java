@@ -13,10 +13,12 @@ import lombok.experimental.FieldDefaults;
 public class SeatResponse {
     String id;
     String name;
-    String userId;
+    UserResponse user;
     String roomId;
     String typeSeat;
     String status;
+    int ox;
+    int oy;
     String number;
     String description;
     String created;

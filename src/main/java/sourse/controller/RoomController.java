@@ -54,4 +54,11 @@ public class RoomController {
          apiResponse.setData(roomService.index(page, size));
         return apiResponse;
     }
+    @GetMapping("/hall/{id}")
+    ApiResponse <List<RoomResponse>> roomInHall(@PathVariable String id){
+        ApiResponse<List<RoomResponse>> apiResponse = new ApiResponse<>();
+        apiResponse.setData(roomService.roomInHall(id));
+        return apiResponse;
+    }
+
     }

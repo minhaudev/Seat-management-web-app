@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import sourse.dto.request.FloorCreationRequest;
 
+import sourse.dto.request.FloorUpdateRequest;
 import sourse.dto.response.FloorResponse;
 import sourse.dto.response.RoomResponse;
 import sourse.entity.Floor;
@@ -18,6 +19,8 @@ import sourse.mapper.RoomMapper;
 import sourse.repository.FloorRepository;
 import sourse.repository.RoomRepository;
 import sourse.repository.UserRepository;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +45,11 @@ public class FloorService {
         return floorMapper.toFloorResponse(floor);
     }
     @PreAuthorize("hasAnyRole('SUPERUSER')")
-    public FloorResponse update (String id, FloorCreationRequest request) {
+    public List <FloorResponse> index () {
+        return floorMapper.toFloorResponseList(floorRepository.findAll());
+    }
+    @PreAuthorize("hasAnyRole('SUPERUSER')")
+    public FloorResponse update (String id, FloorUpdateRequest request) {
         Floor floor = this.findById(id);
          floorMapper.updateFloor(floor, request);
         floorRepository.save(floor);

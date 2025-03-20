@@ -22,9 +22,13 @@ String lastName;
 @Email
 String email;
 String password;
+
 String phone;
 String project;
 String team;
+@ManyToOne
+@JoinColumn(name="room_id", referencedColumnName = "id")
+Room room;
 @ManyToMany
 Set<Role>roles;
 }
