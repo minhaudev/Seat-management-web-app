@@ -12,13 +12,13 @@ redis:
   port: 6379
   password: root
   ssl: false
-
-  jpa:
+jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
     properties:
       hibernate.format_sql: true
-
+file:
+  upload-dir: uploads/
 jwt:
   signerKey: "KUJOzbCuK/OeoCghRlx37paZxItqk17Fg62DMJNdH5gIeEsz1sN2b15SvP8aY7fV"

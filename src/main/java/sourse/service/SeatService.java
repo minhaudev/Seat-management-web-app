@@ -62,7 +62,7 @@ public class SeatService {
         if (seatRepository.existsByName(request.getName()))
             throw new AppException(ErrorCode.NAME_EXITED);
        Room room = roomService.findById(request.getRoomId());
-        validateLandlordPermission(room);
+//        validateLandlordPermission(room);
         Seat seat = seatMapper.toSeat(request);
         seat.setRoom(room);
         if (request.getUserId() != null) {
@@ -94,7 +94,7 @@ public class SeatService {
         return seatResponse;
     }
 
-    @PreAuthorize("hasAnyRole('SUPERUSER', 'LANDLORD')")
+//    @PreAuthorize("hasAnyRole('SUPERUSER', 'LANDLORD')")
 
     public SeatResponse  show(String id) {
         Seat seat = this.findById(id);
@@ -111,7 +111,7 @@ public class SeatService {
 
         seatRepository.delete(seat);
     }
-    @PreAuthorize("hasAnyRole('SUPERUSER')")
+//    @PreAuthorize("hasAnyRole('SUPERUSER')")
     public Map<String, Object> index(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Seat> seats = seatRepository.findAll(pageable);
@@ -124,19 +124,7 @@ public class SeatService {
     }
 
 
-    @PreAuthorize("hasAnyRole('SUPERUSER', 'LANDLORD')")
-    public Page <SeatResponse> listSeatInRoom (String id,int page, int size, EnumType.SeatStatus status) {
-        Page<Seat> seats;
-       Room room = roomService.findById(id);
-        validateLandlordPermission(room);   
-        Pageable pageable = PageRequest.of(page, size);
-        if (status != null) {
-            seats = seatRepository.findByRoomIdAndStatus(room.getId(), status, pageable); // Lọc theo status
-        } else {
-            seats = seatRepository.findByRoomId(room.getId(), pageable);
-        }
-        return seats.map(seatMapper::toSeatResponse);
-    }
+
     @PreAuthorize("hasAnyRole('SUPERUSER', 'LANDLORD')")
     public SeatResponse assignment(String id, String userId ) {
         Seat seat = this.findById(id);
@@ -145,7 +133,7 @@ public class SeatService {
            throw new AppException(ErrorCode.SEAT_TAKEN);
        }
         Room room = seat.getRoom();
-        validateLandlordPermission(room);
+//        validateLandlordPermission(room);
         seat.setUser(user);
         seat.setStatus(EnumType.SeatStatus.OCCUPIED);
         seatRepository.save(seat);
@@ -215,5 +203,19 @@ public class SeatService {
         }
         seatRepository.saveAll(seatList);
 
+    }
+
+//    @PreAuthorize("hasAnyRole('LANDLORD')")
+    public Page <SeatResponse> listSeatInRoom (String id,int page, int size, EnumType.SeatStatus status) {
+        Page<Seat> seats;
+        Room room = roomService.findById(id);
+//        validateLandlordPermission(room);
+        Pageable pageable = PageRequest.of(page, size);
+        if (status != null) {
+            seats = seatRepository.findByRoomIdAndStatus(room.getId(), status, pageable);
+        } else {
+            seats = seatRepository.findByRoomId(room.getId(), pageable);
+        }
+        return seats.map(seatMapper::toSeatResponse);
     }
 }

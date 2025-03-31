@@ -29,6 +29,7 @@ import sourse.repository.UserRepository;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -42,24 +43,30 @@ public class AuthenticationService {
     protected String SECRET;
         UserRepository userRepository;
       public   AuthResponse authenticate(AuthCreationRequest request) {
-              var user = userRepository.findByEmail(request.getEmail()).
-                      orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-              PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
-              if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                      throw new AppException(ErrorCode.LOGIN_FAILED);
-              }
-              var token = generateToken(user);
-                
-              return AuthResponse.builder()
-                      .firstName(user.getFirstName())
-                      .lastName(user.getLastName())
-                      .email(user.getEmail())
-                      .idUser(user.getId())
-                      .status(true)
-                      .token(token)
-                      .build();
+          var user = userRepository.findByEmail(request.getEmail()).
+                  orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+          PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
+          if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+              throw new AppException(ErrorCode.LOGIN_FAILED);
+          }
+          var token = generateToken(user);
+
+          return AuthResponse.builder()
+                  .firstName(user.getFirstName())
+                  .lastName(user.getLastName())
+                  .email(user.getEmail())
+                  .idUser(user.getId())
+                  .idRoom(user.getRoom() != null ? user.getRoom().getId().toString() : null)
+                  .role(user.getRoles() != null
+                          ? user.getRoles().stream()
+                          .map(Role::getName)  // Lấy name của Role
+                          .collect(Collectors.joining(", ")) // Nối các role thành chuỗi
+                          : null)
+                  .status(true)
+                  .token(token)
+                  .build();
       }
-      public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
+          public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
           var token = request.getToken();
           JWSVerifier verifier = new MACVerifier(SECRET.getBytes());
           SignedJWT signedJWT = SignedJWT.parse(token);
@@ -114,7 +121,7 @@ public class AuthenticationService {
         if (user.getRoles().stream().anyMatch(role -> "SUPERUSER".equals(role.getName()))) {
             return;
         }
-        boolean isOwner = user.getId().equals(idOwner);
+        boolean isOwner = user.getId().equals(idOwner) &&  (user.getRoles().stream().anyMatch(role -> "LANDLORD".equals(role.getName())));
         if (!isOwner) {
             throw new AppException(ErrorCode.UNCATEGORIZED);
         }

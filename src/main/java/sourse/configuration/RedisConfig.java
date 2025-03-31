@@ -1,5 +1,6 @@
 package sourse.configuration;
 
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -13,7 +14,6 @@ public class RedisConfig {
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-
         RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration("localhost", 6379);
         configuration.setPassword("root");
 
@@ -24,11 +24,28 @@ public class RedisConfig {
     public RedisTemplate<String, String> redisTemplate() {
         RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory());
-
-
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new StringRedisSerializer());
-
         return template;
+    }
+
+    // ✅ Kiểm tra kết nối Redis ngay khi Spring Boot khởi động
+    @Bean
+    public CommandLineRunner testRedisConnection(RedisTemplate<String, String> redisTemplate) {
+        return args -> {
+            try {
+                redisTemplate.opsForValue().set("testKey", "Hello, World!");
+
+                String value = redisTemplate.opsForValue().get("testKey");
+
+                if ("Hello, World!".equals(value)) {
+                    System.out.println("✅ Redis connected successfully! Value: " + value);
+                } else {
+                    System.out.println("⚠ Redis connected but value mismatch!");
+                }
+            } catch (Exception e) {
+                System.err.println("❌ Redis connection failed: " + e.getMessage());
+            }
+        };
     }
 }

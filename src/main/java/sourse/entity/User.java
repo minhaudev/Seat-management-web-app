@@ -22,7 +22,7 @@ String lastName;
 @Email
 String email;
 String password;
-
+String color;
 String phone;
 String project;
 String team;

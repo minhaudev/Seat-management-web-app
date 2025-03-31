@@ -7,12 +7,14 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import sourse.core.ApiResponse;
 import sourse.dto.request.RoomCreationRequest;
 import sourse.dto.request.RoomUpdateRequest;
 import sourse.dto.request.UserCreationRequest;
 import sourse.dto.response.RoomResponse;
 import sourse.dto.response.UserResponse;
+import sourse.entity.Room;
 import sourse.service.RoomService;
 
 import java.util.List;
@@ -60,5 +62,19 @@ public class RoomController {
         apiResponse.setData(roomService.roomInHall(id));
         return apiResponse;
     }
-
+ @PutMapping("/{id}/update-objects")
+    ApiResponse<RoomResponse>  updateRoomObjects(@PathVariable String id, @RequestBody List<Room.ObjectData> objects)
+ {
+ ApiResponse<RoomResponse> apiResponse = new ApiResponse<>();
+ apiResponse.setData(roomService.updateRoomObjects(id, objects));
+ return apiResponse;
+ }
+    @PostMapping("/{id}/upload")
+    ApiResponse<RoomResponse> uploadImage(
+            @PathVariable String id,
+            @RequestParam("file") MultipartFile file) {
+        ApiResponse apiResponse = new ApiResponse<>();
+        apiResponse.setData(roomService.uploadImage(id, file));
+       return apiResponse;
+    }
     }

@@ -9,6 +9,8 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AuthResponse {
     String idUser;
+    String idRoom;
+    String role;
     String firstName;
     String lastName;
     String email;

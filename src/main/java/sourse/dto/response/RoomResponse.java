@@ -2,6 +2,10 @@ package sourse.dto.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import sourse.entity.Room;
+
+import java.util.List;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -13,6 +17,8 @@ public class RoomResponse {
     String description;
     String owner;
     String nameOwner;
+    String image;
+    List<Room.ObjectData> object;
     String hallId;
     String created;
 }
