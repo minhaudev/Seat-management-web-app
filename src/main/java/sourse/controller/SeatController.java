@@ -94,8 +94,8 @@ public class SeatController {
         return  apiResponse;
     }
     @PutMapping("/update-positions")
-    ApiResponse<Void>  updatePositions (@RequestBody List <SeatUpdatePositionRequest> seats ){
-        seatService.updatePositionSeats(seats);
+    ApiResponse<Void>  updatePositions (@RequestParam  String roomid, @RequestBody List <SeatUpdatePositionRequest> seats ) {
+        seatService.updatePositionSeats(seats,roomid);
         return ApiResponse.<Void>builder().message("Update seats successful").build();
     }
 }

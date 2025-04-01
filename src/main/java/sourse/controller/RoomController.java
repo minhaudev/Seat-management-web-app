@@ -40,6 +40,7 @@ public class RoomController {
     }
     @GetMapping("/{id}")
     ApiResponse<RoomResponse> show(@PathVariable String id){
+        System.out.println("grt rôm");
         ApiResponse<RoomResponse> apiResponse = new ApiResponse<>();
         apiResponse.setData(roomService.show(id));
         return apiResponse;
@@ -76,5 +77,10 @@ public class RoomController {
         ApiResponse apiResponse = new ApiResponse<>();
         apiResponse.setData(roomService.uploadImage(id, file));
        return apiResponse;
+    }
+    @DeleteMapping("/{roomId}/objects/{objectId}")
+    ApiResponse<Void> deleteRoomObjects(@PathVariable String roomId, @PathVariable String objectId) {
+        roomService.deleteObject(roomId, objectId);
+        return ApiResponse.<Void>builder().message("Delete object successful").build();
     }
     }

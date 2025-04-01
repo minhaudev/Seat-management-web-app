@@ -150,7 +150,7 @@
                      var email = authentication.getName();
                      return userMapper.toUserResponse(userRepository.findByEmail(email).orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND)));
            }
-           @PreAuthorize("hasRole('SUPERUSER')")
+//           @PreAuthorize("hasRole('SUPERUSER')")
            public List<UserInRoomResponse> userInRoom(String roomId) {
                Room room = getRoomService().findById(roomId);
                List<User> users = userRepository.findByRoomId(room.getId());

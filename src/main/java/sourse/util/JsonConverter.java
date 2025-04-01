@@ -7,8 +7,7 @@ import jakarta.persistence.Converter;
 import sourse.entity.Room;
 
 import java.util.List;
-
-@Converter
+@Converter(autoApply = true)
 public class JsonConverter implements AttributeConverter<List<Room.ObjectData>, String> {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();

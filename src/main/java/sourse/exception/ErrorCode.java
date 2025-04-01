@@ -36,6 +36,7 @@ public enum ErrorCode {
     NO_USER_IN_SEAT(1021, "There is no one sitting in this chair!", HttpStatus.BAD_REQUEST),
     SEAT_NOT_CHANGE(1022, "This seat cannot be changed!", HttpStatus.BAD_REQUEST),
     SEAT_TAKEN(1023, "This seat is already taken!", HttpStatus.BAD_REQUEST),
+    OBJECT_NOT_FOUND(1024, "object not found!", HttpStatus.BAD_REQUEST),
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized-sever!",HttpStatus.INTERNAL_SERVER_ERROR);
     int code;
     String message;

@@ -47,6 +47,7 @@ public class RoomService {
     @Lazy
     private final UserService userService;
     private final FloorRepository floorRepository;
+    private final WebSocketService webSocketService;
 
     public Room findById(String id) {
         return roomRepository.findById(id)
@@ -103,8 +104,6 @@ public class RoomService {
         if (currentObjects == null) {
             currentObjects = new ArrayList<>();
         }
-
-
         Map<UUID, Room.ObjectData> objectMap = currentObjects.stream()
                 .collect(Collectors.toMap(Room.ObjectData::getId, obj -> obj));
 
@@ -121,15 +120,11 @@ public class RoomService {
                 currentObjects.add(newObj);
             }
         }
-
-        // Lưu lại danh sách object vào room
         room.setObject(currentObjects);
         roomRepository.save(room);
-
+        webSocketService.sendSeatUpdateNotification(roomId, null, "object");
         return roomMapper.toRoomResponse(room);
     }
-
-
 
     @PreAuthorize("hasAnyRole('SUPERUSER','LANDLORD')")
     public RoomResponse uploadImage(String roomId, MultipartFile file) {
@@ -140,17 +135,14 @@ public class RoomService {
         Path uploadPath = Paths.get(uploadDir);
 
         try {
-            // Nếu thư mục chưa tồn tại, tạo mới
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
-
-            // Lưu file vào thư mục
             Path filePath = uploadPath.resolve(file.getOriginalFilename());
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-            // Lưu đường dẫn vào database
-            room.setImage("/images/" + file.getOriginalFilename()); // Trả về URL động
+
+            room.setImage("/images/" + file.getOriginalFilename());
             roomRepository.save(room);
         } catch (Exception e) {
             throw new RuntimeException("Không thể lưu file: " + e.getMessage());
@@ -158,4 +150,22 @@ public class RoomService {
 
         return roomMapper.toRoomResponse(room);
     }
+    @PreAuthorize("hasAnyRole('SUPERUSER','LANDLORD')")
+    public void deleteObject(String id, String idObject) {
+        Room room = this.findById(id);
+        Room.ObjectData objectToRemove = null;
+        for (Room.ObjectData object : room.getObject()) {
+            if (object.getId().toString().equals(idObject)) {
+                objectToRemove = object;
+                break;
+            }
+        }
+        if (objectToRemove != null) {
+            room.getObject().remove(objectToRemove);
+        } else {
+            throw new AppException(ErrorCode.OBJECT_NOT_FOUND);
+        }
+        roomRepository.save(room);
+    }
+
 }

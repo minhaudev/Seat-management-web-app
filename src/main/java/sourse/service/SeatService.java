@@ -89,7 +89,7 @@ public class SeatService {
         seatRepository.save(seat);
         SeatResponse seatResponse = seatMapper.toSeatResponse(seat);
 
-        webSocketService.sendSeatUpdateNotification(room.getId(), seatMapper.toSeatResponse(seat));
+//        webSocketService.sendSeatUpdateNotification(room.getId(), seatMapper.toSeatResponse(seat));
 
         return seatResponse;
     }
@@ -138,7 +138,7 @@ public class SeatService {
         seat.setStatus(EnumType.SeatStatus.OCCUPIED);
         seatRepository.save(seat);
         SeatResponse response = seatMapper.toSeatResponse(seat);
-        webSocketService.sendSeatUpdateNotification(room.getId(), seatMapper.toSeatResponse(seat));
+        webSocketService.sendSeatUpdateNotification(room.getId(), seatMapper.toSeatResponse(seat),"seat");
         return  response;
 
     }
@@ -162,7 +162,7 @@ public class SeatService {
         oldSeat.setStatus(EnumType.SeatStatus.AVAILABLE);
         seatRepository.save(oldSeat);
         seatRepository.save(newSeat);
-        webSocketService.sendSeatUpdateNotification(roomId, seatMapper.toSeatResponse(newSeat));
+        webSocketService.sendSeatUpdateNotification(roomId, seatMapper.toSeatResponse(newSeat),"seat");
         return seatMapper.toSeatResponse(newSeat);
     }
 
@@ -191,7 +191,8 @@ public class SeatService {
     @PreAuthorize("hasAnyRole('SUPERUSER', 'LANDLORD')")
     @Transactional
 
-    public void updatePositionSeats(List<SeatUpdatePositionRequest> seats){
+    public void updatePositionSeats(List<SeatUpdatePositionRequest> seats, String roomid) {
+        Room room = roomService.findById(roomid);
         List<Seat> seatList = new ArrayList<>();
         for (SeatUpdatePositionRequest seatRequest : seats) {
             Seat seat = this.findById(seatRequest.getId());
@@ -202,14 +203,16 @@ public class SeatService {
             }
         }
         seatRepository.saveAll(seatList);
-
+        webSocketService.sendSeatUpdateNotification(roomid, null, "seat");
     }
+
 
 //    @PreAuthorize("hasAnyRole('LANDLORD')")
     public Page <SeatResponse> listSeatInRoom (String id,int page, int size, EnumType.SeatStatus status) {
         Page<Seat> seats;
         Room room = roomService.findById(id);
 //        validateLandlordPermission(room);
+
         Pageable pageable = PageRequest.of(page, size);
         if (status != null) {
             seats = seatRepository.findByRoomIdAndStatus(room.getId(), status, pageable);
