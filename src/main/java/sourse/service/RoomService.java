@@ -1,5 +1,6 @@
 package sourse.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +9,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.ListOperations;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,6 +19,7 @@ import sourse.dto.request.RoomUpdateRequest;
 import sourse.dto.response.RoomResponse;
 import sourse.entity.Hall;
 import sourse.entity.Room;
+import sourse.entity.RoomChange;
 import sourse.entity.User;
 import sourse.exception.AppException;
 import sourse.exception.ErrorCode;
@@ -23,16 +27,14 @@ import sourse.mapper.RoomMapper;
 import sourse.repository.FloorRepository;
 import sourse.repository.RoomRepository;
 import jakarta.annotation.PostConstruct;
+import sourse.util.UserUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.PrivateKey;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,12 +44,14 @@ import java.util.stream.Collectors;
 public class RoomService {
     RoomMapper roomMapper;
     RoomRepository roomRepository;
-
+    RedisService redisService;
     HallService hallService;
     @Lazy
     private final UserService userService;
     private final FloorRepository floorRepository;
     private final WebSocketService webSocketService;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     public Room findById(String id) {
         return roomRepository.findById(id)
@@ -99,32 +103,80 @@ public class RoomService {
     }
     @PreAuthorize("hasAnyRole('SUPERUSER','LANDLORD')")
     public RoomResponse updateRoomObjects(String roomId, List<Room.ObjectData> newObjects) {
-        Room room = this.findById(roomId);
-        List<Room.ObjectData> currentObjects = room.getObject();
-        if (currentObjects == null) {
-            currentObjects = new ArrayList<>();
-        }
-        Map<UUID, Room.ObjectData> objectMap = currentObjects.stream()
-                .collect(Collectors.toMap(Room.ObjectData::getId, obj -> obj));
-
-        for (Room.ObjectData newObj : newObjects) {
-            if (newObj.getId() != null && objectMap.containsKey(newObj.getId())) {
-                Room.ObjectData existingObj = objectMap.get(newObj.getId());
-                existingObj.setName(newObj.getName());
-                existingObj.setWidth(newObj.getWidth());
-                existingObj.setHeight(newObj.getHeight());
-                existingObj.setOx(newObj.getOx());
-                existingObj.setOy(newObj.getOy());
-                existingObj.setColor(newObj.getColor());
-            } else {
-                currentObjects.add(newObj);
+                Room room = this.findById(roomId);
+            List<Room.ObjectData> currentObjects = room.getObject();
+            if (currentObjects == null) {
+                currentObjects = new ArrayList<>();
             }
+            Map<UUID, Room.ObjectData> objectMap = currentObjects.stream()
+                    .collect(Collectors.toMap(Room.ObjectData::getId, obj -> obj));
+            for (Room.ObjectData newObj : newObjects) {
+                if (newObj.getId() != null && objectMap.containsKey(newObj.getId())) {
+                    Room.ObjectData existingObj = objectMap.get(newObj.getId());
+                    existingObj.setName(newObj.getName());
+                    existingObj.setWidth(newObj.getWidth());
+                    existingObj.setHeight(newObj.getHeight());
+                    existingObj.setOx(newObj.getOx());
+                    existingObj.setOy(newObj.getOy());
+                    existingObj.setColor(newObj.getColor());
+                } else {
+                    currentObjects.add(newObj);
+                }
+            }
+            room.setObject(currentObjects);
+            String role = UserUtils.getCurrentUserRole();
+            if("LANDLORD" .equals(role)) {
+                RoomChange roomChange = new RoomChange(roomId,room.getName(), "LANDLORD", newObjects, "PENDING");
+                redisService.addOrUpdateRoomChange("room_changes", roomChange);
+                webSocketService.sendToSuperUsers(null,  "SUPERUSER", "A landlord has updated the room. Please review.");
+                return roomMapper.toRoomResponse(room);
+            } else if ("SUPERUSER".equals(role)) {
+            roomRepository.save(room);
+            webSocketService.sendSeatUpdateNotification(roomId, null, "object", "Your room has been updated.");
+                return roomMapper.toRoomResponse(room);
+            };
+            return roomMapper.toRoomResponse(room);
         }
-        room.setObject(currentObjects);
-        roomRepository.save(room);
-        webSocketService.sendSeatUpdateNotification(roomId, null, "object");
-        return roomMapper.toRoomResponse(room);
+
+
+public RoomResponse updateRoomApprove(String roomId, List<Room.ObjectData> newObjects) {
+    Room room = this.findById(roomId);
+    List<Room.ObjectData> currentObjects = room.getObject();
+    if (currentObjects == null) {
+        currentObjects = new ArrayList<>();
     }
+    Map<UUID, Room.ObjectData> objectMap = currentObjects.stream()
+            .collect(Collectors.toMap(Room.ObjectData::getId, obj -> obj));
+    for (Room.ObjectData newObj : newObjects) {
+        if (newObj.getId() != null && objectMap.containsKey(newObj.getId())) {
+            Room.ObjectData existingObj = objectMap.get(newObj.getId());
+            existingObj.setName(newObj.getName());
+            existingObj.setWidth(newObj.getWidth());
+            existingObj.setHeight(newObj.getHeight());
+            existingObj.setOx(newObj.getOx());
+            existingObj.setOy(newObj.getOy());
+            existingObj.setColor(newObj.getColor());
+        } else {
+            currentObjects.add(newObj);
+        }
+    }
+         room.setObject(currentObjects);
+        roomRepository.save(room);
+        webSocketService.sendSeatUpdateNotification(roomId, null, "object", "Your room has been updated.");
+        return roomMapper.toRoomResponse(room);
+
+}
+        @PreAuthorize("hasAnyRole('SUPERUSER')")
+            public void approve(String roomId) {
+            Optional<RoomChange> roomChangeOpt = redisService.getRoomChangeById("room_changes",roomId);
+            if(roomChangeOpt.isEmpty()) {
+                throw  new AppException(ErrorCode.ROOM_NOT_FOUND);
+            }
+            RoomChange roomChange = roomChangeOpt.get();
+            updateRoomApprove(roomId, roomChange.getChangedData());
+            redisService.removeRoomChange("room_changes", roomId);
+
+        }
 
     @PreAuthorize("hasAnyRole('SUPERUSER','LANDLORD')")
     public RoomResponse uploadImage(String roomId, MultipartFile file) {
@@ -169,3 +221,4 @@ public class RoomService {
     }
 
 }
+

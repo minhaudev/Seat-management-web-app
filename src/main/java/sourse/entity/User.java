@@ -29,6 +29,7 @@ String team;
 @ManyToOne
 @JoinColumn(name="room_id", referencedColumnName = "id")
 Room room;
+//    @ManyToMany(fetch = FetchType.EAGER)
 @ManyToMany
 Set<Role>roles;
 }

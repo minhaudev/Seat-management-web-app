@@ -1,11 +1,16 @@
 package sourse.configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 
@@ -15,28 +20,38 @@ public class RedisConfig {
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration("localhost", 6379);
-        configuration.setPassword("root");
-
+        configuration.setPassword("root");  // Đảm bảo mật khẩu đúng nếu có
         return new LettuceConnectionFactory(configuration);
     }
 
+    // Cấu hình ObjectMapper với JavaTimeModule (bạn vẫn có thể cần ObjectMapper nếu muốn tùy chỉnh)
     @Bean
-    public RedisTemplate<String, String> redisTemplate() {
-        RedisTemplate<String, String> template = new RedisTemplate<>();
+    public ObjectMapper objectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);  // Không lưu ngày dưới dạng timestamp
+        objectMapper.configure(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false);
+        objectMapper.registerModule(new JavaTimeModule());  // Đăng ký module JavaTimeModule để hỗ trợ LocalDateTime
+        return objectMapper;
+    }
+
+    // Cấu hình RedisTemplate
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory, ObjectMapper objectMapper) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory());
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new StringRedisSerializer());
+        GenericJackson2JsonRedisSerializer jackson2JsonRedisSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+        template.setValueSerializer(jackson2JsonRedisSerializer);
         return template;
     }
 
-    // ✅ Kiểm tra kết nối Redis ngay khi Spring Boot khởi động
     @Bean
-    public CommandLineRunner testRedisConnection(RedisTemplate<String, String> redisTemplate) {
+    public CommandLineRunner testRedisConnection(RedisTemplate<String, Object> redisTemplate) {
         return args -> {
             try {
-                redisTemplate.opsForValue().set("testKey", "Hello, World!");
+                redisTemplate.opsForValue().set("testKey", "Hello, World!");  // Lưu giá trị vào Redis
 
-                String value = redisTemplate.opsForValue().get("testKey");
+                String value = (String) redisTemplate.opsForValue().get("testKey");
 
                 if ("Hello, World!".equals(value)) {
                     System.out.println("✅ Redis connected successfully! Value: " + value);

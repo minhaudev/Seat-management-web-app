@@ -1,4 +1,5 @@
 package sourse.dto.request;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -16,7 +17,11 @@ public class UserUpdateRequest {
     String firstName;
     @Size(min =3, message = "LastName must be at least 3 characters.")
     String lastName;
+    @Email
+    String email;
     String  roomId;
+    String team;
+    String project;
     @Size(min=2, max = 15, message =  "PHONE_NUMBER")
     String phone;
     List<String> roles;

@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,8 +16,11 @@ import sourse.dto.request.UserCreationRequest;
 import sourse.dto.response.RoomResponse;
 import sourse.dto.response.UserResponse;
 import sourse.entity.Room;
+import sourse.entity.RoomChange;
+import sourse.service.RedisService;
 import sourse.service.RoomService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -26,6 +30,8 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class RoomController {
     RoomService roomService;
+    private final RedisService redisService;
+
     @PostMapping()
     ApiResponse<RoomResponse> store (@RequestBody @Valid RoomCreationRequest request){
         ApiResponse<RoomResponse> apiResponse = new ApiResponse<>();
@@ -82,5 +88,22 @@ public class RoomController {
     ApiResponse<Void> deleteRoomObjects(@PathVariable String roomId, @PathVariable String objectId) {
         roomService.deleteObject(roomId, objectId);
         return ApiResponse.<Void>builder().message("Delete object successful").build();
+    }
+
+
+    @GetMapping("/update/layout")
+    public ResponseEntity<List<RoomChange>> getAllRoomChanges() {
+        List<RoomChange> roomChanges = redisService.getAllRoomChanges("room_changes");
+        return ResponseEntity.ok(roomChanges);
+    }
+    @PostMapping("/approve/{roomId}")
+    public  ApiResponse<RoomResponse> approve(@PathVariable String roomId) {
+        roomService.approve(roomId);
+        return ApiResponse.<RoomResponse>builder().message("Approve object successful").build();
+    }
+    @DeleteMapping("/reject/{roomId}")
+    public   ApiResponse<RoomResponse> reject(@PathVariable String roomId) {
+        redisService.removeRoomChange("room_changes", roomId);
+        return ApiResponse.<RoomResponse>builder().message("Reject object successful").build();
     }
     }

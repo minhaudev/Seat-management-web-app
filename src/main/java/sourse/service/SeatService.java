@@ -138,7 +138,7 @@ public class SeatService {
         seat.setStatus(EnumType.SeatStatus.OCCUPIED);
         seatRepository.save(seat);
         SeatResponse response = seatMapper.toSeatResponse(seat);
-        webSocketService.sendSeatUpdateNotification(room.getId(), seatMapper.toSeatResponse(seat),"seat");
+        webSocketService.sendSeatUpdateNotification(room.getId(), seatMapper.toSeatResponse(seat),"seat", "Your room has been updated.");
         return  response;
 
     }
@@ -162,7 +162,7 @@ public class SeatService {
         oldSeat.setStatus(EnumType.SeatStatus.AVAILABLE);
         seatRepository.save(oldSeat);
         seatRepository.save(newSeat);
-        webSocketService.sendSeatUpdateNotification(roomId, seatMapper.toSeatResponse(newSeat),"seat");
+        webSocketService.sendSeatUpdateNotification(roomId, seatMapper.toSeatResponse(newSeat),"seat", "Your room has been updated.");
         return seatMapper.toSeatResponse(newSeat);
     }
 
@@ -203,7 +203,7 @@ public class SeatService {
             }
         }
         seatRepository.saveAll(seatList);
-        webSocketService.sendSeatUpdateNotification(roomid, null, "seat");
+        webSocketService.sendSeatUpdateNotification(roomid, null, "seat", "Your room has been updated.");
     }
 
 

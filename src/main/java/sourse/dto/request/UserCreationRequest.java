@@ -27,6 +27,7 @@ public class UserCreationRequest {
     String confirmPassword;
     String project;
     String team;
+    String birthday;
 
     public boolean isPasswordConfirmed() {
         return password != null && password.equals(confirmPassword);

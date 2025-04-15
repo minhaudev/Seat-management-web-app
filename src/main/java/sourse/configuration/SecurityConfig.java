@@ -32,7 +32,7 @@ import java.util.Arrays;
 public class SecurityConfig {
     @Value("${jwt.signerKey}")
     private String signerKey;
-        private final  String[] PUBLIC_ENDPOINTS = {"api/users","api/auth/login", "api/auth/introspect", "/ws/**" };
+        private final  String[] PUBLIC_ENDPOINTS = {"api/users","api/auth/login", "api/auth/introspect","api/auth/forgot-password","api/auth/reset-password", "/ws/**" };
     @Bean
     public SecurityFilterChain configure(HttpSecurity http) throws Exception {
         http.cors(Customizer.withDefaults())
@@ -72,7 +72,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000")); // Nguồn gốc cho phép
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST","PATCH", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

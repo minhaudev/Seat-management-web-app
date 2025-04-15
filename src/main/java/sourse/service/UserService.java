@@ -15,6 +15,7 @@
        import org.springframework.security.crypto.password.PasswordEncoder;
        import org.springframework.security.oauth2.jwt.Jwt;
        import org.springframework.stereotype.Service;
+       import org.springframework.transaction.annotation.Transactional;
        import sourse.dto.request.UserUpdateRequest;
        import sourse.dto.response.UserInRoomResponse;
        import sourse.dto.response.UserResponse;
@@ -111,31 +112,34 @@
                return userMapper.toUserResponse(user);
            }
 
-
-
-
-           @PreAuthorize("hasRole('SUPERUSER')")
+//           @PreAuthorize("hasRole('SUPERUSER')")
           public UserResponse update( String id, UserUpdateRequest request) {
              User user = this.findById(id);
-        Room room = getRoomService().findById(request.getRoomId());
-        user.setRoom(room);
+              if (request.getRoomId() != null) {
+                  Room room = getRoomService().findById(request.getRoomId());
+                  user.setRoom(room);
+              }
+              var roles = roleRepository.findAllById(request.getRoles());
+              user.setRoles(new HashSet<>(roles));
+              userMapper.updateUser(user, request);
 
-             var roles = roleRepository.findAllById(request.getRoles());
-             user.setRoles(new HashSet<>(roles));
-             userMapper.updateUser(user, request);
+
              return userMapper.toUserResponse(userRepository.save(user));
 
           }
 
 
 
+           @Transactional
            @PreAuthorize("hasRole('SUPERUSER')")
-          public void  delete(String id) {
-             User user = this.findById(id);
-             userRepository.delete(user);
+           public void delete(String id) {
+               User user = this.findById(id);
+//               user.getRoles().clear();
+//               userRepository.save(user);
+               userRepository.delete(user);
+           }
 
-          }
-          @PostAuthorize("returnObject.email == authentication.name or hasRole('SUPERUSER')" )
+           @PostAuthorize("returnObject.email == authentication.name or hasRole('SUPERUSER')" )
        public UserResponse show(String id) {
                var authentication = SecurityContextHolder.getContext().getAuthentication();
              User user = this.findById(id);
@@ -147,6 +151,7 @@
            }
            public UserResponse showInfo() {
                      var authentication = SecurityContextHolder.getContext().getAuthentication();
+                     System.out.println("authentication" + authentication);
                      var email = authentication.getName();
                      return userMapper.toUserResponse(userRepository.findByEmail(email).orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND)));
            }

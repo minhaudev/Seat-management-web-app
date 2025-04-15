@@ -37,6 +37,8 @@ public enum ErrorCode {
     SEAT_NOT_CHANGE(1022, "This seat cannot be changed!", HttpStatus.BAD_REQUEST),
     SEAT_TAKEN(1023, "This seat is already taken!", HttpStatus.BAD_REQUEST),
     OBJECT_NOT_FOUND(1024, "object not found!", HttpStatus.BAD_REQUEST),
+    EMAIL_NOT_FOUND(1025, "Email not found!", HttpStatus.BAD_REQUEST),
+    TOKEN_INVALID(1026, "Invalid or expired token!", HttpStatus.BAD_REQUEST),
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized-sever!",HttpStatus.INTERNAL_SERVER_ERROR);
     int code;
     String message;
