@@ -3,10 +3,13 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
-    username: postgres
-    password: root
-
+#    url: jdbc:postgresql://localhost:5432/postgres
+#    username: postgres
+#    password: root
+#    render db cloud
+    url: jdbc:postgresql://dpg-cvvkuvruibrs73bhv2s0-a.oregon-postgres.render.com:5432/db_intern
+    username: db_intern_user
+    password: IcuPCl3dIAEs6Z0neoN2eNsuQoIrUu60
   mail:
     host: smtp.gmail.com
     port: 587
@@ -27,13 +30,18 @@ spring:
     properties:
       hibernate:
         format_sql: true
+#
+#redis:
+#  host: 127.0.0.1
+#  port: 6379
+#  password: root
+#  ssl: false
 
 redis:
-  host: 127.0.0.1
+  host: quiet-ant-13751.upstash.io
   port: 6379
-  password: root
-  ssl: false
-
+  password: ATW3AAIjcDE2OTc5MWI4MzNhNjU0YjNhYWFmYjc5MzRkMzFjYTZkZXAxMA
+  ssl: true
 file:
   upload-dir: uploads/
 

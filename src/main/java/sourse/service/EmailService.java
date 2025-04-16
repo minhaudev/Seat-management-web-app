@@ -15,7 +15,7 @@ public class EmailService {
     @Autowired
     JavaMailSender mailSender;
     public void sendResetPasswordEmail(String toEmail, String token) {
-        String resetLink = "http://localhost:3000/resetpassword/"+token;
+        String resetLink = "https://seat-management-web-app-fe-jusr-1zakswi8e.vercel.app/resetpassword/"+token;
         String subject = "Reset your password";
         String body = "Click the link to reset your password: \n" + resetLink;
         SimpleMailMessage message = new SimpleMailMessage();

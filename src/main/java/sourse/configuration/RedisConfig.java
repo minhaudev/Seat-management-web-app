@@ -8,6 +8,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
@@ -19,9 +20,12 @@ public class RedisConfig {
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration("localhost", 6379);
-        configuration.setPassword("root");  // Đảm bảo mật khẩu đúng nếu có
-        return new LettuceConnectionFactory(configuration);
+        RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration("quiet-ant-13751.upstash.io", 6379);
+        configuration.setPassword("ATW3AAIjcDE2OTc5MWI4MzNhNjU0YjNhYWFmYjc5MzRkMzFjYTZkZXAxMA");  // Đảm bảo mật khẩu đúng nếu có
+        LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
+                .useSsl() // ⚠️ Bắt buộc cho Upstash
+                .build();
+        return new LettuceConnectionFactory(configuration, clientConfig);
     }
 
     // Cấu hình ObjectMapper với JavaTimeModule (bạn vẫn có thể cần ObjectMapper nếu muốn tùy chỉnh)
@@ -30,7 +34,7 @@ public class RedisConfig {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);  // Không lưu ngày dưới dạng timestamp
         objectMapper.configure(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false);
-        objectMapper.registerModule(new JavaTimeModule());  // Đăng ký module JavaTimeModule để hỗ trợ LocalDateTime
+        objectMapper.registerModule(new JavaTimeModule());
         return objectMapper;
     }
 

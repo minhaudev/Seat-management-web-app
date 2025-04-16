@@ -71,7 +71,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000")); // Nguồn gốc cho phép
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000","https://seat-management-web-app-fe-jusr-1zakswi8e.vercel.app/", "http://127.0.0.1:3000")); // Nguồn gốc cho phép
         configuration.setAllowedMethods(Arrays.asList("GET", "POST","PATCH", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
