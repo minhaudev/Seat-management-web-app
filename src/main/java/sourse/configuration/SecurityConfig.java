@@ -25,6 +25,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Arrays;
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
@@ -71,7 +72,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000","https://seat-management-web-app-fe-jusr-1zakswi8e.vercel.app/", "http://127.0.0.1:3000")); // Nguồn gốc cho phép
+//        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000","https://seat-management-web-app-fe-jusr-1zakswi8e.vercel.app/", "http://127.0.0.1:3000")); // Nguồn gốc cho phép
+        configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST","PATCH", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
@@ -79,7 +81,5 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
-
 }
 
