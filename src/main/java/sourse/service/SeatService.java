@@ -163,13 +163,13 @@ public class SeatService {
             throw new AppException(ErrorCode.NO_USER_IN_SEAT);
         } else if(newSeat.getUser() != null){
             throw new AppException(ErrorCode.SEAT_ALREADY_ASSIGNED);
-        } else if(oldSeat.getTypeSeat().name() == "PERMANENT"){
-            throw  new AppException(ErrorCode.SEAT_NOT_CHANGE);
         }
 
         User user = oldSeat.getUser();
         oldSeat.setUser(null);
         newSeat.setUser(user);
+        newSeat.setExpiredAt(oldSeat.getExpiredAt());
+        oldSeat.setExpiredAt(null);
         newSeat.setStatus(EnumType.SeatStatus.OCCUPIED);
         oldSeat.setStatus(EnumType.SeatStatus.AVAILABLE);
         seatRepository.save(oldSeat);
