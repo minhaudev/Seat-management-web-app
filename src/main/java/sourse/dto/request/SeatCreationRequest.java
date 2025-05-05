@@ -14,10 +14,12 @@ public class SeatCreationRequest {
     @NotBlank
     String name;
     String number;
+    int ox;
+    int oy;
     String description;
-    @NotBlank
     String typeSeat;
     String status;
     String userId;
+    @NotBlank
     String roomId;
 }

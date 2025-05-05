@@ -35,6 +35,7 @@ public class Authentication {
     @PostMapping("/login")
    public ApiResponse <AuthResponse>  login (@RequestBody @Valid AuthCreationRequest request){
         AuthResponse authResponse = authenticationService.authenticate(request);
+
         return ApiResponse.<AuthResponse>builder()
                 .data(authResponse)
                 .build();

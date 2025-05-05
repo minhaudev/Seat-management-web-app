@@ -20,8 +20,8 @@ public class UserUpdateRequest {
     @Email
     String email;
     String  roomId;
-    String team;
-    String project;
+    String teamId;
+    String projectId;
     @Size(min=2, max = 15, message =  "PHONE_NUMBER")
     String phone;
     List<String> roles;

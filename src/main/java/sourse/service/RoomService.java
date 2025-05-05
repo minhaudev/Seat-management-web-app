@@ -16,11 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import sourse.dto.request.RoomCreationRequest;
 import sourse.dto.request.RoomUpdateRequest;
+//import sourse.dto.response.BreadcrumbItemResponse;
 import sourse.dto.response.RoomResponse;
-import sourse.entity.Hall;
-import sourse.entity.Room;
-import sourse.entity.RoomChange;
-import sourse.entity.User;
+import sourse.entity.*;
 import sourse.exception.AppException;
 import sourse.exception.ErrorCode;
 import sourse.mapper.RoomMapper;
@@ -52,6 +50,7 @@ public class RoomService {
     private final WebSocketService webSocketService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
+    private final FloorService floorService;
 
     public Room findById(String id) {
         return roomRepository.findById(id)
@@ -65,7 +64,7 @@ public class RoomService {
         Hall hall = hallService.findById(request.getHallId());
         Room room = roomMapper.toRoom(request);
         room.setNameOwner(user.getFirstName() + user.getLastName());
-        room.setUser(user);
+        room.setNameOwner(user.getId());
         room.setHall(hall);
         roomRepository.save(room);
        return  roomMapper.toRoomResponse(room);
@@ -99,6 +98,7 @@ public class RoomService {
     public List<RoomResponse> roomInHall(String id) {
         Hall hall = hallService.findById(id);
         List<Room> rooms = roomRepository.findByHallId(hall.getId());
+
         return rooms.stream().map(roomMapper::toRoomResponse).collect(Collectors.toList());
     }
     @PreAuthorize("hasAnyRole('SUPERUSER','LANDLORD')")
@@ -125,16 +125,27 @@ public class RoomService {
             }
             room.setObject(currentObjects);
             String role = UserUtils.getCurrentUserRole();
-            if("LANDLORD" .equals(role)) {
-                RoomChange roomChange = new RoomChange(roomId,room.getName(), "LANDLORD", newObjects, "PENDING");
-                redisService.addOrUpdateRoomChange("room_changes", roomChange);
-                webSocketService.sendToSuperUsers(null,  "SUPERUSER", "A landlord has updated the room. Please review.");
-                return roomMapper.toRoomResponse(room);
-            } else if ("SUPERUSER".equals(role)) {
-            roomRepository.save(room);
-            webSocketService.sendSeatUpdateNotification(roomId, null, "object", "Your room has been updated.");
-                return roomMapper.toRoomResponse(room);
-            };
+            if("LANDLORD".equals(role)) {
+                RoomChange existingChange = redisService.getRoomChange("room_changes", roomId);
+                if (existingChange != null) {
+                  System.out.println("existingChange" + existingChange);
+                    existingChange.setChangedData(newObjects);
+                } else {
+                    // Nếu chưa có → tạo mới
+                    existingChange = RoomChange.builder()
+                            .roomId(roomId)
+                            .roomName(room.getName())
+                            .changedBy("LANDLORD")
+                            .changedData(newObjects)
+                            .status("PENDING")
+                            .build();
+                }
+                redisService.addOrUpdateRoomChange("room_changes", existingChange);
+//                webSocketService.sendToSuperUsers(null, "SUPERUSER", "A landlord has updated the room. Please review.");
+            }else if ("SUPERUSER".equals(role)) {
+                roomRepository.save(room);
+                webSocketService.sendSeatUpdateNotification(roomId, null, "object", "Room has been updated directly by SUPERUSER.");
+            }
             return roomMapper.toRoomResponse(room);
         }
 
@@ -181,8 +192,6 @@ public RoomResponse updateRoomApprove(String roomId, List<Room.ObjectData> newOb
     @PreAuthorize("hasAnyRole('SUPERUSER','LANDLORD')")
     public RoomResponse uploadImage(String roomId, MultipartFile file) {
         Room room = this.findById(roomId);
-
-        // Tạo đường dẫn thư mục lưu ảnh
         String uploadDir = "uploads";
         Path uploadPath = Paths.get(uploadDir);
 
@@ -192,8 +201,6 @@ public RoomResponse updateRoomApprove(String roomId, List<Room.ObjectData> newOb
             }
             Path filePath = uploadPath.resolve(file.getOriginalFilename());
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-
             room.setImage("/images/" + file.getOriginalFilename());
             roomRepository.save(room);
         } catch (Exception e) {
@@ -219,6 +226,8 @@ public RoomResponse updateRoomApprove(String roomId, List<Room.ObjectData> newOb
         }
         roomRepository.save(room);
     }
+
+
 
 }
 

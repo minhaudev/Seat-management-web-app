@@ -10,6 +10,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import sourse.core.ApiResponse;
 
+import sourse.dto.request.SeatAssignmentRequest;
 import sourse.dto.request.SeatCreationRequest;
 import sourse.dto.request.SeatUpdatePositionRequest;
 import sourse.dto.request.SeatUpdateRequest;
@@ -67,7 +68,7 @@ public class SeatController {
 
     @GetMapping("/{id}/room")
     ApiResponse <Page<SeatResponse>> listSeatInRoom(@PathVariable String id,   @RequestParam(defaultValue = "0") int page,
-                                                    @RequestParam(defaultValue = "10") int size,
+                                                    @RequestParam(defaultValue = "30") int size,
                                                     @RequestParam(required  = false) EnumType.SeatStatus status ) {
 
         ApiResponse<Page<SeatResponse>> apiResponse = new ApiResponse<>();
@@ -76,9 +77,9 @@ public class SeatController {
     }
 
     @PostMapping("/{id}/assign")
-     ApiResponse<SeatResponse> assignment (@PathVariable String id, @RequestParam String idUser) {
+     ApiResponse<SeatResponse> assignment (@PathVariable String id, @RequestParam String idUser,@RequestBody @Valid SeatAssignmentRequest request ) {
           ApiResponse<SeatResponse> apiResponse = new ApiResponse<>();
-          apiResponse.setData(seatService.assignment(id, idUser));
+          apiResponse.setData(seatService.assignment(id, idUser, request.getTypeSeat(), request.getExpiredAt()));
           return  apiResponse;
     }
     @PostMapping("/{id}/reassign")
@@ -86,6 +87,12 @@ public class SeatController {
         ApiResponse<SeatResponse> apiResponse = new ApiResponse<>();
         apiResponse.setData(seatService.reAssignment(id, idSeat));
         return  apiResponse;
+    }
+    @PostMapping("/{id}/remove")
+    ApiResponse<SeatResponse> removeAssignment (@PathVariable String id) {
+        ApiResponse<SeatResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setData(seatService.removeSeat((id)));
+        return apiResponse;
     }
     @GetMapping("/{id}/user")
       ApiResponse<SeatUserResponse> seatUser (@PathVariable String id) {

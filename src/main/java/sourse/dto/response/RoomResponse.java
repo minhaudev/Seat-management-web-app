@@ -20,5 +20,8 @@ public class RoomResponse {
     String image;
     List<Room.ObjectData> object;
     String hallId;
+    String floorId;
+    String nameHall;
+    String nameFloor;
     String created;
 }

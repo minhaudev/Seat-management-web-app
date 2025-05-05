@@ -7,17 +7,19 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 import sourse.dto.request.SeatCreationRequest;
 import sourse.dto.request.SeatUpdatePositionRequest;
 import sourse.dto.request.SeatUpdateRequest;
+import sourse.dto.response.RoomResponse;
 import sourse.dto.response.SeatResponse;
 import sourse.dto.response.SeatUserResponse;
-import sourse.entity.Room;
-import sourse.entity.Seat;
-import sourse.entity.User;
+import sourse.dto.response.UserResponse;
+import sourse.entity.*;
 import sourse.enums.EnumType;
 import sourse.exception.AppException;
 import sourse.exception.ErrorCode;
@@ -25,7 +27,9 @@ import sourse.mapper.SeatMapper;
 import sourse.mapper.UserMapper;
 import sourse.repository.SeatRepository;
 import sourse.repository.UserRepository;
+import sourse.util.UserUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,12 +49,14 @@ public class SeatService {
     private final UserMapper userMapper;
     private final UserRepository userRepository;
     WebSocketService webSocketService;
+    private final RedisService redisService;
+
     public Seat findById(String id) {
         return seatRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.SEAT_NOT_FOUND));
     }
     private void validateLandlordPermission(Room room) {
-        authenticationService.checkLandlordPermission(room.getUser().getId());
+        authenticationService.checkLandlordPermission(room.getOwnerId());
     }
     private final ApplicationContext applicationContext;
 
@@ -59,8 +65,6 @@ public class SeatService {
     }
     @PreAuthorize("hasAnyRole('SUPERUSER', 'LANDLORD')")
     public SeatResponse store(SeatCreationRequest request) {
-        if (seatRepository.existsByName(request.getName()))
-            throw new AppException(ErrorCode.NAME_EXITED);
        Room room = roomService.findById(request.getRoomId());
 //        validateLandlordPermission(room);
         Seat seat = seatMapper.toSeat(request);
@@ -122,26 +126,34 @@ public class SeatService {
         response.put("totalElements", seats.getTotalElements());
         return response;
     }
-
-
-
     @PreAuthorize("hasAnyRole('SUPERUSER', 'LANDLORD')")
-    public SeatResponse assignment(String id, String userId ) {
+    public SeatResponse assignment(String id, String userId, EnumType.TypeSeat typeSeat, @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)  LocalDateTime expiredAt) {
         Seat seat = this.findById(id);
-       var user = userService.findById(userId);
-       if(seat.getUser() != null) {
-           throw new AppException(ErrorCode.SEAT_TAKEN);
-       }
+        var user = userService.findById(userId);
+
+        if(seat.getUser() != null) {
+            throw new AppException(ErrorCode.SEAT_TAKEN);
+        }
+
         Room room = seat.getRoom();
-//        validateLandlordPermission(room);
+
+        seat.setTypeSeat(typeSeat);
         seat.setUser(user);
         seat.setStatus(EnumType.SeatStatus.OCCUPIED);
-        seatRepository.save(seat);
-        SeatResponse response = seatMapper.toSeatResponse(seat);
-        webSocketService.sendSeatUpdateNotification(room.getId(), seatMapper.toSeatResponse(seat),"seat", "Your room has been updated.");
-        return  response;
 
+        if (typeSeat == EnumType.TypeSeat.TEMPORARY) {
+            seat.setExpiredAt(expiredAt);
+        } else {
+            seat.setExpiredAt(null);
+        }
+
+        seatRepository.save(seat);
+
+        SeatResponse response = seatMapper.toSeatResponse(seat);
+        webSocketService.sendSeatUpdateNotification(room.getId(), response, "seat", "Your room has been updated.");
+        return response;
     }
+
     @PreAuthorize("hasAnyRole('SUPERUSER', 'LANDLORD')")
     public  SeatResponse reAssignment(String id, String idNewSeat){
         Seat oldSeat = this.findById(id);
@@ -165,6 +177,22 @@ public class SeatService {
         webSocketService.sendSeatUpdateNotification(roomId, seatMapper.toSeatResponse(newSeat),"seat", "Your room has been updated.");
         return seatMapper.toSeatResponse(newSeat);
     }
+    @PreAuthorize("hasAnyRole('SUPERUSER', 'LANDLORD')")
+    public SeatResponse removeSeat(String id ) {
+        Seat seat = this.findById(id);
+        if(seat.getUser() == null) {
+            throw new AppException(ErrorCode.NO_USER_IN_SEAT);
+        }
+        Room room = seat.getRoom();
+        seat.setStatus(EnumType.SeatStatus.AVAILABLE);
+        seat.setUser(null);
+        seat.setExpiredAt(null);
+        seatRepository.save(seat);
+        SeatResponse response = seatMapper.toSeatResponse(seat);
+        webSocketService.sendSeatUpdateNotification(room.getId(), seatMapper.toSeatResponse(seat),"seat", "Your room has been updated.");
+        return  response;
+
+    }
 
     public SeatUserResponse seatUser (String id){
         Seat seat = this.findById(id);
@@ -179,8 +207,8 @@ public class SeatService {
                 .userId(user.getId())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .project(user.getProject())
-                .team(user.getTeam())
+                .project(user != null && user.getProject() != null ? user.getProject().getName() : null)
+                .team(user != null && user.getTeam() != null ? user.getTeam().getName() : null)
                 .typeSeat(seat.getTypeSeat().name())
                 .status(seat.getStatus().name())
                 .roomId(seat.getRoom().getId())
@@ -188,13 +216,30 @@ public class SeatService {
                 .created(seat.getCreated().toString())
                 .build();
     }
-    @PreAuthorize("hasAnyRole('SUPERUSER', 'LANDLORD')")
-    @Transactional
+//        @PreAuthorize("hasAnyRole('SUPERUSER', 'LANDLORD')")
+//        @Transactional
+//        public void updatePositionSeats(List<SeatUpdatePositionRequest> seatRequests, String roomId) {
+//            Room room = roomService.findById(roomId);
+//            List<Seat> seatList = new ArrayList<>();
+//
+//            for (SeatUpdatePositionRequest seatRequest : seatRequests) {
+//                Seat seat = this.findById(seatRequest.getId());
+//                if (seat != null) {
+//                    seat.setOx(seatRequest.getOx());
+//                    seat.setOy(seatRequest.getOy());
+//                    seatList.add(seat);
+//                    seatRepository.save(seat);
+//                }
+//            }
+//        }
 
-    public void updatePositionSeats(List<SeatUpdatePositionRequest> seats, String roomid) {
-        Room room = roomService.findById(roomid);
+    @PreAuthorize("hasAnyRole('SUPERUSER','LANDLORD')")
+    @Transactional
+    public List<SeatResponse>  updatePositionSeats(List<SeatUpdatePositionRequest> seatRequests, String roomId) {
+        Room room = roomService.findById(roomId);
         List<Seat> seatList = new ArrayList<>();
-        for (SeatUpdatePositionRequest seatRequest : seats) {
+
+        for (SeatUpdatePositionRequest seatRequest : seatRequests) {
             Seat seat = this.findById(seatRequest.getId());
             if (seat != null) {
                 seat.setOx(seatRequest.getOx());
@@ -202,9 +247,57 @@ public class SeatService {
                 seatList.add(seat);
             }
         }
-        seatRepository.saveAll(seatList);
-        webSocketService.sendSeatUpdateNotification(roomid, null, "seat", "Your room has been updated.");
+
+        String role = UserUtils.getCurrentUserRole();
+        List<SeatResponse> seatResponseList = null;
+        if ("LANDLORD".equals(role)) {
+            RoomChange existingChange = redisService.getRoomChange("room_changes", roomId);
+
+            seatResponseList = seatList.stream()
+                    .map(seat -> SeatResponse.builder()
+                            .id(seat.getId())
+                            .name(seat.getName())
+                            .user(seat.getUser() != null ? UserResponse.builder()
+                                    .id(seat.getUser().getId())
+                                    .firstName(seat.getUser().getFirstName())
+                                    .lastName(seat.getUser().getLastName())
+                                    .email(seat.getUser().getEmail())
+                                    .color(seat.getUser().getColor())
+                                    .build() : null)
+                            .roomId(seat.getRoom() != null ? seat.getRoom().getId() : null)
+                            .typeSeat(String.valueOf(seat.getTypeSeat()))
+                            .status(String.valueOf(seat.getStatus()))
+                            .ox(seat.getOx())
+                            .oy(seat.getOy())
+                            .number(seat.getNumber())
+                            .description(seat.getDescription())
+                            .expiredAt(seat.getExpiredAt() != null ? seat.getExpiredAt().toString() : null)
+                            .build())
+                    .toList();
+
+            if (existingChange != null) {
+                existingChange.setSeatData(seatResponseList);
+            } else {
+                existingChange = RoomChange.builder()
+                        .roomId(roomId)
+                        .roomName(room.getName())
+                        .changedBy("LANDLORD")
+                        .seatData(seatResponseList)
+                        .status("PENDING")
+                        .build();
+            }
+            redisService.addOrUpdateRoomChange("room_changes", existingChange);
+            webSocketService.sendToSuperUsers(null, "SUPERUSER", "A landlord has updated seat positions. Please review.");
+        } else if ("SUPERUSER".equals(role)) {
+            for (Seat seat : seatList) {
+                seatRepository.save(seat);
+            }
+            webSocketService.sendSeatUpdateNotification(roomId, null, "seat", "Seat positions have been updated directly by SUPERUSER.");
+        }
+
+        return seatResponseList;
     }
+
 
 
 //    @PreAuthorize("hasAnyRole('LANDLORD')")

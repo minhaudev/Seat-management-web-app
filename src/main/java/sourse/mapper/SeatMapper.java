@@ -10,7 +10,7 @@ import sourse.enums.EnumType;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {UserMapper.class})
 public interface SeatMapper {
 
     @Mapping(target = "status", source = "status")

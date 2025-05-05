@@ -28,15 +28,10 @@ public class Room extends BaseEntity {
     List<ObjectData> object;
 
     String image;
-    @ManyToOne
-    @JsonIgnore
-    @JoinColumn(name = "owner_id", referencedColumnName = "id")
-    User user;
-
+    String ownerId;
     @ManyToOne
     @JoinColumn(name="hall_id", referencedColumnName = "id")
     Hall hall;
-
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

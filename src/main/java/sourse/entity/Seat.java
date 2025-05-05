@@ -5,25 +5,21 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import sourse.core.BaseEntity;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "seats", uniqueConstraints = @UniqueConstraint(columnNames = "name"))
+@Table(name = "seats")
 public class Seat extends BaseEntity {
-    @Column(unique = true, nullable = false)
     String name;
-
-    @Column(unique = true, nullable = false)
     String number;
-
     String description;
-
     @Enumerated(EnumType.STRING)
     sourse.enums.EnumType.TypeSeat typeSeat;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     sourse.enums.EnumType.SeatStatus status;
@@ -35,10 +31,12 @@ public class Seat extends BaseEntity {
     @ManyToOne
     @JoinColumn(name="user_id", referencedColumnName = "id")
     User user;
+    @Column(name = "expired_at")
+    private LocalDateTime expiredAt;
 
     @Column(nullable = false)
-    int ox = 0;
+    int ox;
 
     @Column(nullable = false)
-    int oy = 0;
+    int oy;
 }

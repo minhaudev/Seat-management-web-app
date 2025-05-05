@@ -11,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -37,6 +38,8 @@ import java.util.stream.Collectors;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationService {
 
+
+    private final RedisTemplate<String, Object> redisTemplate;
     @NonFinal
 //    doc bien tu file yaml
     @Value ("${jwt.signerKey}")
@@ -50,20 +53,28 @@ public class AuthenticationService {
               throw new AppException(ErrorCode.LOGIN_FAILED);
           }
           var token = generateToken(user);
+          boolean isFirstLogin = false;
+          String redisKey = "user:first_login:" + user.getId();
 
+          if (Boolean.FALSE.equals(redisTemplate.hasKey(redisKey))) {
+              isFirstLogin = true;
+              redisTemplate.opsForValue().set(redisKey, "true");
+          }
           return AuthResponse.builder()
                   .firstName(user.getFirstName())
                   .lastName(user.getLastName())
                   .email(user.getEmail())
                   .idUser(user.getId())
                   .idRoom(user.getRoom() != null ? user.getRoom().getId().toString() : null)
+                  .roomName(user.getRoom() != null ? user.getRoom().getName() : null)
                   .role(user.getRoles() != null
                           ? user.getRoles().stream()
                           .map(Role::getName)  // Lấy name của Role
-                          .collect(Collectors.joining(", ")) // Nối các role thành chuỗi
+                          .collect(Collectors.joining(", "))
                           : null)
                   .status(true)
                   .token(token)
+                  .isFirstLogin(isFirstLogin)
                   .build();
       }
           public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {

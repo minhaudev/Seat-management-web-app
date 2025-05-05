@@ -25,8 +25,8 @@ public class UserCreationRequest {
     String password;
     @NotBlank
     String confirmPassword;
-    String project;
-    String team;
+    String projectId;
+    String teamId;
     String birthday;
 
     public boolean isPasswordConfirmed() {

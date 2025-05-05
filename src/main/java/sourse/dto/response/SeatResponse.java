@@ -21,5 +21,6 @@ public class SeatResponse {
     int oy;
     String number;
     String description;
+    String expiredAt;
     String created;
 }

@@ -17,14 +17,18 @@ import java.util.List;
 public interface RoomMapper {
     Room toRoom(RoomCreationRequest room);
 
-    @Mapping(target = "owner", source = "user.id")
-    @Mapping(target = "hallId", source = "hall.id")
-    @Mapping(target = "object", source = "object", qualifiedByName = "mapObjectData")
 
+
+    @Mapping(target = "hallId", source = "hall.id")
+    @Mapping(target = "nameHall", source = "hall.name") // Ánh xạ tên hall
+    @Mapping(target = "floorId", expression = "java(room.getHall() != null && room.getHall().getFloor() != null ? room.getHall().getFloor().getId() : null)")
+    @Mapping(target = "nameFloor", expression = "java(room.getHall() != null && room.getHall().getFloor() != null ? room.getHall().getFloor().getName() : null)") // Ánh xạ tên floor
+    @Mapping(target = "object", source = "object", qualifiedByName = "mapObjectData")
+    @Mapping(target = "owner", source = "ownerId")
     RoomResponse toRoomResponse(Room room);
     @Named("mapObjectData")
     static List<Room.ObjectData> mapObjectData(List<Room.ObjectData> objectData) {
-        return objectData != null ? objectData : List.of(); // ✅ Trả về danh sách thay vì null
+        return objectData != null ? objectData : List.of();
     }
     @Mapping(target = "id", ignore = true)
     void updateRoom(@MappingTarget Room room, RoomUpdateRequest request);

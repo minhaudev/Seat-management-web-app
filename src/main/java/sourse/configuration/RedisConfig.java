@@ -23,26 +23,26 @@ public class RedisConfig {
         RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration("quiet-ant-13751.upstash.io", 6379);
         configuration.setPassword("ATW3AAIjcDE2OTc5MWI4MzNhNjU0YjNhYWFmYjc5MzRkMzFjYTZkZXAxMA");  // Đảm bảo mật khẩu đúng nếu có
         LettuceClientConfiguration clientConfig = LettuceClientConfiguration.builder()
-                .useSsl() // ⚠️ Bắt buộc cho Upstash
+                .useSsl()
                 .build();
         return new LettuceConnectionFactory(configuration, clientConfig);
     }
 
-    // Cấu hình ObjectMapper với JavaTimeModule (bạn vẫn có thể cần ObjectMapper nếu muốn tùy chỉnh)
+    // Cấu hình ObjectMapper với JavaTimeModule
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);  // Không lưu ngày dưới dạng timestamp
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         objectMapper.configure(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false);
         objectMapper.registerModule(new JavaTimeModule());
         return objectMapper;
     }
 
-    // Cấu hình RedisTemplate
+    // Cấu hình RedisTemplate cho Object
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory, ObjectMapper objectMapper) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(redisConnectionFactory());
+        template.setConnectionFactory(redisConnectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
         GenericJackson2JsonRedisSerializer jackson2JsonRedisSerializer = new GenericJackson2JsonRedisSerializer(objectMapper);
         template.setValueSerializer(jackson2JsonRedisSerializer);

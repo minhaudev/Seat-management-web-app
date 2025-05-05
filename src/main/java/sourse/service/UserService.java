@@ -6,6 +6,7 @@
        import org.slf4j.ILoggerFactory;
        import org.springframework.context.ApplicationContext;
        import org.springframework.context.annotation.Lazy;
+       import org.springframework.data.redis.core.HashOperations;
        import org.springframework.data.redis.core.RedisTemplate;
        import org.springframework.data.redis.core.StringRedisTemplate;
        import org.springframework.data.redis.core.ValueOperations;
@@ -19,16 +20,12 @@
        import sourse.dto.request.UserUpdateRequest;
        import sourse.dto.response.UserInRoomResponse;
        import sourse.dto.response.UserResponse;
-       import sourse.entity.Role;
-       import sourse.entity.Room;
-       import sourse.entity.User;
+       import sourse.entity.*;
        import sourse.enums.EnumType;
        import sourse.exception.AppException;
        import sourse.exception.ErrorCode;
        import sourse.mapper.UserMapper;
-       import sourse.repository.RoleRepository;
-       import sourse.repository.SeatRepository;
-       import sourse.repository.UserRepository;
+       import sourse.repository.*;
        import sourse.dto.request.UserCreationRequest;
 
        import java.util.HashSet;
@@ -43,14 +40,18 @@
        @RequiredArgsConstructor
        @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
        public class UserService {
+
            UserRepository userRepository;
            UserMapper userMapper;
            PasswordEncoder passwordEncoder;
            RoleRepository roleRepository;
-
+           private static final String TEAM_COLOR_HASH = "team_colors";
+           private static final String PROJECT_COLOR_HASH = "project_colors";
            private final ApplicationContext applicationContext;
            private final SeatRepository seatRepository;
            private final StringRedisTemplate redisTemplate;
+           private final ProjectRepository projectRepository;
+           private final TeamRepository teamRepository;
 
            public User findById(String id) {
                return userRepository.findById(id)
@@ -63,11 +64,42 @@
            private String generateNewColor() {
                return "#" + String.format("%06X", (int) (Math.random() * 0xFFFFFF));
            }
+           private String resolveColorFromTeamOrProject(String teamId, String projectId) {
+               HashOperations<String, String, String> hashOps = redisTemplate.opsForHash();
+
+               if (teamId != null) {
+                   String color = hashOps.get(TEAM_COLOR_HASH, teamId);
+
+                   if (color == null) {
+                       Optional<User> existingUser = userRepository.findFirstByTeam_Id(teamId);
+                       color = existingUser.map(User::getColor).orElseGet(this::generateNewColor);
+                       hashOps.put(TEAM_COLOR_HASH, teamId, color);
+                   }
+
+                   return color;
+               }
+
+               if (projectId != null) {
+                   String color = hashOps.get(PROJECT_COLOR_HASH, projectId);
+
+                   if (color == null) {
+                       Optional<User> existingUser = userRepository.findFirstByProject_Id(projectId);
+                       color = existingUser.map(User::getColor).orElseGet(this::generateNewColor);
+                       hashOps.put(PROJECT_COLOR_HASH, projectId, color);
+                   }
+
+                   return color;
+               }
+
+               return "#FFFFFF";
+           }
+
 
            public UserResponse store(UserCreationRequest request) {
                if (userRepository.existsByEmail(request.getEmail())) {
                    throw new AppException(ErrorCode.EMAIL_EXITED);
                }
+
                if (!request.isPasswordConfirmed()) {
                    throw new AppException(ErrorCode.MATCH_PASSWORD);
                }
@@ -75,67 +107,137 @@
                User user = userMapper.toUser(request);
                user.setPassword(passwordEncoder.encode(request.getPassword()));
 
+               // Gán ROLE mặc định
                Role defaultRole = roleRepository.findByName("USER")
                        .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
                user.setRoles(Set.of(defaultRole));
 
+               HashOperations<String, String, String> hashOps = redisTemplate.opsForHash();
                String color = "#FFFFFF";
-               ValueOperations<String, String> redisOps = redisTemplate.opsForValue();
 
-               // Ưu tiên lấy màu theo thứ tự: Team -> Project -> White
-               if (request.getTeam() != null) {
-                   user.setTeam(request.getTeam());
-                   String teamKey = "team_color:" + request.getTeam();
-                   color = redisOps.get(teamKey);
+               // Gán team nếu có
+               if (request.getTeamId() != null) {
+                   Team team = teamRepository.findById(request.getTeamId())
+                           .orElseThrow(() -> new AppException(ErrorCode.NOTFOUND));
+                   user.setTeam(team);
 
-                   if (color == null) {
-                       Optional<User> existingUser = userRepository.findFirstByTeam(request.getTeam());
-                       color = existingUser.map(User::getColor).orElseGet(this::generateNewColor);
-                       redisOps.set(teamKey, color, 200, TimeUnit.HOURS);
+                   String teamId = team.getId();
+                   String colorValue = hashOps.get(TEAM_COLOR_HASH, teamId);
+
+                   if (colorValue == null) {
+                       // Lưu tên và màu vào Redis
+                       colorValue = team.getName() + "," + generateNewColor();
+                       hashOps.put(TEAM_COLOR_HASH, teamId, colorValue);
                    }
-               } else if (request.getProject() != null) {
-                   user.setProject(request.getProject());
-                   String projectKey = "project_color:" + request.getProject();
-                   color = redisOps.get(projectKey);
 
-                   if (color == null) {
-                       Optional<User> existingUser = userRepository.findFirstByProject(request.getProject());
-                       color = existingUser.map(User::getColor).orElseGet(this::generateNewColor);
-                       redisOps.set(projectKey, color, 24, TimeUnit.HOURS);
+                   // Chỉ lấy màu
+                   color = colorValue.split(",")[1]; // Lấy màu
+               }
+
+               // Gán project nếu có
+               if (request.getProjectId() != null) {
+                   Project project = projectRepository.findById(request.getProjectId())
+                           .orElseThrow(() -> new AppException(ErrorCode.NOTFOUND));
+                   user.setProject(project);
+
+                   String projectId = project.getId();
+                   String colorValue = hashOps.get(PROJECT_COLOR_HASH, projectId);
+
+                   // Chỉ override nếu chưa có color từ team
+                   if (color.equals("#FFFFFF")) {
+                       if (colorValue == null) {
+                           // Lưu tên và màu vào Redis
+                           colorValue = project.getName() + "," + generateNewColor();
+                           hashOps.put(PROJECT_COLOR_HASH, projectId, colorValue);
+                       }
+
+
+                       color = colorValue.split(",")[1];
                    }
                }
 
-               System.out.println("Assigned color: " + color);
+
                user.setColor(color);
                userRepository.save(user);
 
                return userMapper.toUserResponse(user);
            }
 
-//           @PreAuthorize("hasRole('SUPERUSER')")
-          public UserResponse update( String id, UserUpdateRequest request) {
-             User user = this.findById(id);
-              if (request.getRoomId() != null) {
-                  Room room = getRoomService().findById(request.getRoomId());
-                  user.setRoom(room);
-              }
-              var roles = roleRepository.findAllById(request.getRoles());
-              user.setRoles(new HashSet<>(roles));
-              userMapper.updateUser(user, request);
+           public UserResponse update(String id, UserUpdateRequest request) {
+
+               User user = this.findById(id);
+               System.out.println("user: " + user.getEmail() + request.getEmail());
+               if(!request.getEmail().equals(user.getEmail()) ) {
+                   if (userRepository.existsByEmail(request.getEmail())) {
+                       throw new AppException(ErrorCode.EMAIL_EXITED);
+                   }
+               }
+
+               if (request.getRoomId() != null) {
+                   Room room = getRoomService().findById(request.getRoomId());
+                   user.setRoom(room);
+               }
+
+               if (request.getTeamId() != null) {
+                   Team team = teamRepository.findById(request.getTeamId())
+                           .orElseThrow(() -> new AppException(ErrorCode.NOTFOUND));
+                   user.setTeam(team);
+               }
+
+               if (request.getProjectId() != null) {
+                   Project project = projectRepository.findById(request.getProjectId())
+                           .orElseThrow(() -> new AppException(ErrorCode.NOTFOUND));
+                   user.setProject(project);
+               }
+
+               if (request.getRoles() != null && !request.getRoles().isEmpty()) {
+                   var roles = roleRepository.findAllById(request.getRoles());
+                   user.setRoles(new HashSet<>(roles));
+               }
+
+               if (request.getTeamId() != null || request.getProjectId() != null) {
+                   HashOperations<String, String, String> hashOps = redisTemplate.opsForHash();
+                   String color = "#FFFFFF";
+
+                   if (request.getTeamId() != null) {
+                       String teamId = request.getTeamId();
+                       String colorValue = hashOps.get(TEAM_COLOR_HASH, teamId);
+
+                       if (colorValue == null) {
+                           Team team = teamRepository.findById(teamId)
+                                   .orElseThrow(() -> new AppException(ErrorCode.NOTFOUND));
+                           colorValue = team.getName() + "," + generateNewColor();
+                           hashOps.put(TEAM_COLOR_HASH, teamId, colorValue);
+                       }
 
 
-             return userMapper.toUserResponse(userRepository.save(user));
+                       color = colorValue.split(",")[1];
+                   }
 
-          }
+                   if (request.getProjectId() != null && color.equals("#FFFFFF")) {
+                       String projectId = request.getProjectId();
+                       String colorValue = hashOps.get(PROJECT_COLOR_HASH, projectId);
 
+                       if (colorValue == null) {
+                           Project project = projectRepository.findById(projectId)
+                                   .orElseThrow(() -> new AppException(ErrorCode.NOTFOUND));
+                           colorValue = project.getName() + "," + generateNewColor();
+                           hashOps.put(PROJECT_COLOR_HASH, projectId, colorValue);
+                       }
 
+                       // Chỉ lấy màu
+                       color = colorValue.split(",")[1]; // Lấy màu
+                   }
 
+                   user.setColor(color);
+               }
+               userMapper.updateUser(user, request);
+               return userMapper.toUserResponse(userRepository.save(user));
+           }
            @Transactional
            @PreAuthorize("hasRole('SUPERUSER')")
            public void delete(String id) {
                User user = this.findById(id);
-//               user.getRoles().clear();
-//               userRepository.save(user);
                userRepository.delete(user);
            }
 
@@ -151,7 +253,6 @@
            }
            public UserResponse showInfo() {
                      var authentication = SecurityContextHolder.getContext().getAuthentication();
-                     System.out.println("authentication" + authentication);
                      var email = authentication.getName();
                      return userMapper.toUserResponse(userRepository.findByEmail(email).orElseThrow(()-> new AppException(ErrorCode.USER_NOT_FOUND)));
            }

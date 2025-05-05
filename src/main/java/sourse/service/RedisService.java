@@ -3,7 +3,6 @@ package sourse.service;
 import org.springframework.data.redis.core.ListOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import sourse.entity.RoomChange;
 
@@ -23,12 +22,7 @@ public class RedisService {
 
     public void addOrUpdateRoomChange(String key, RoomChange newChange) {
         ListOperations<String, Object> listOps = redisTemplate.opsForList();
-
-        List<Object> rawList = listOps.range(key, 0, -1);
-        List<RoomChange> roomChanges = rawList.stream()
-                .map(obj -> objectMapper.convertValue(obj, RoomChange.class))
-                .collect(Collectors.toList());
-
+        List<RoomChange> roomChanges = getAllRoomChanges(key);
 
         boolean isUpdated = false;
         for (int i = 0; i < roomChanges.size(); i++) {
@@ -39,7 +33,6 @@ public class RedisService {
             }
         }
 
-
         if (!isUpdated) {
             roomChanges.add(newChange);
         }
@@ -49,11 +42,17 @@ public class RedisService {
             listOps.rightPush(key, roomChange);
         }
     }
+
     public Optional<RoomChange> getRoomChangeById(String key, String roomId) {
         return getAllRoomChanges(key).stream()
                 .filter(change -> change.getRoomId().equals(roomId))
                 .findFirst();
     }
+
+    public RoomChange getRoomChange(String key, String roomId) {
+        return getRoomChangeById(key, roomId).orElse(null);
+    }
+
     public List<RoomChange> getAllRoomChanges(String key) {
         ListOperations<String, Object> listOps = redisTemplate.opsForList();
         List<Object> rawList = listOps.range(key, 0, -1);
@@ -61,12 +60,15 @@ public class RedisService {
                 .map(obj -> objectMapper.convertValue(obj, RoomChange.class))
                 .collect(Collectors.toList());
     }
-    public void removeRoomChange(String key, String roomId) {
-        ListOperations<String, Object> listOps = redisTemplate.opsForList();
-        List <RoomChange> roomChanges = getAllRoomChanges(key);
 
-        List<RoomChange> updatedList = roomChanges.stream().filter(change -> !change.getRoomId().equals(roomId)).collect(Collectors.toList());
+    public void removeRoomChange(String key, String roomId) {
+        List<RoomChange> roomChanges = getAllRoomChanges(key);
+        List<RoomChange> updatedList = roomChanges.stream()
+                .filter(change -> !change.getRoomId().equals(roomId))
+                .collect(Collectors.toList());
+
         redisTemplate.delete(key);
+        ListOperations<String, Object> listOps = redisTemplate.opsForList();
         for (RoomChange roomChange : updatedList) {
             listOps.rightPush(key, roomChange);
         }

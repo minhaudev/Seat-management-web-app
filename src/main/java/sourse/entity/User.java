@@ -1,5 +1,6 @@
 package sourse.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import sourse.core.BaseEntity;
@@ -24,12 +25,20 @@ String email;
 String password;
 String color;
 String phone;
-String project;
-String team;
 @ManyToOne
-@JoinColumn(name="room_id", referencedColumnName = "id")
+@JoinColumn(name = "team_id")
+Team team;
+
+@ManyToOne
+@JsonIgnore
+@JoinColumn(name = "project_id")
+Project project;
+
+@ManyToOne
+@JsonIgnore
+@JoinColumn(name="room_id")
 Room room;
-//    @ManyToMany(fetch = FetchType.EAGER)
+
 @ManyToMany
 Set<Role>roles;
 }

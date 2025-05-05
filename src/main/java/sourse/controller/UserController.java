@@ -23,7 +23,7 @@ import java.util.List;
     @Validated
     public class UserController  {
         @Autowired
-        private UserService userService;
+        UserService userService;
         @PostMapping()
         ApiResponse<UserResponse> store (@RequestBody @Valid UserCreationRequest request) {
             ApiResponse<UserResponse> apiResponse = new ApiResponse<>();

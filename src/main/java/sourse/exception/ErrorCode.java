@@ -39,6 +39,10 @@ public enum ErrorCode {
     OBJECT_NOT_FOUND(1024, "object not found!", HttpStatus.BAD_REQUEST),
     EMAIL_NOT_FOUND(1025, "Email not found!", HttpStatus.BAD_REQUEST),
     TOKEN_INVALID(1026, "Invalid or expired token!", HttpStatus.BAD_REQUEST),
+    TEAM_EXISTS(1027, "team exists!", HttpStatus.BAD_REQUEST),
+    PROJECT_EXISTS(1028, "project exists!", HttpStatus.BAD_REQUEST),
+    TYPESEAT_EXISTS(1028, "type seat exists!", HttpStatus.BAD_REQUEST),
+    NOTFOUND(1029, "Not Found!", HttpStatus.BAD_REQUEST),
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized-sever!",HttpStatus.INTERNAL_SERVER_ERROR);
     int code;
     String message;

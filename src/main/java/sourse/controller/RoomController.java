@@ -46,7 +46,6 @@ public class RoomController {
     }
     @GetMapping("/{id}")
     ApiResponse<RoomResponse> show(@PathVariable String id){
-        System.out.println("grt rôm");
         ApiResponse<RoomResponse> apiResponse = new ApiResponse<>();
         apiResponse.setData(roomService.show(id));
         return apiResponse;
