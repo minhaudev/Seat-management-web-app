@@ -130,8 +130,7 @@
                        hashOps.put(TEAM_COLOR_HASH, teamId, colorValue);
                    }
 
-                   // Chỉ lấy màu
-                   color = colorValue.split(",")[1]; // Lấy màu
+                   color = colorValue.split(",")[1];
                }
 
                // Gán project nếu có
@@ -166,10 +165,11 @@
            public UserResponse update(String id, UserUpdateRequest request) {
 
                User user = this.findById(id);
-               System.out.println("user: " + user.getEmail() + request.getEmail());
                if(!request.getEmail().equals(user.getEmail()) ) {
                    if (userRepository.existsByEmail(request.getEmail())) {
                        throw new AppException(ErrorCode.EMAIL_EXITED);
+                   } else {
+                       user.setEmail(request.getEmail());
                    }
                }
 
